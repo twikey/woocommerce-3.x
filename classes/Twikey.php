@@ -122,6 +122,23 @@ class Twikey {
         curl_close($ch);
         return json_decode($server_output);
     }
+    
+    public function newLink($data) {
+        $this->auth = $this->authenticate();
+        $payload = http_build_query($data);
+        $this->debugRequest($payload);
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, sprintf("%s/creditor/payment/link", $this->endpoint));
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array("Authorization: $this->auth","Accept-Language: $this->lang"));
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_USERAGENT, "twikey-php/v".Twikey::VERSION);
+        $server_output = curl_exec($ch);
+        $this->checkResponse($ch, $server_output, "Creating a new paymentlink!");
+        curl_close($ch);
+        return json_decode($server_output);
+    }
 
     public function getPayments($id, $detail) {
         $this->auth = $this->authenticate();
