@@ -1,5 +1,5 @@
 <?php
-
+/* Please take the latest version from https://github.com/twikey/snippets/blob/master/php/Twikey.php */
 class Twikey {
     
     const VERSION = '2.0.1';
