@@ -4,8 +4,7 @@ class TwikeyGateway extends WC_Payment_Gateway
 {
     const TWIKEY_MNDT_ID = 'TwikeyMandate';
 
-    public function __construct()
-    {
+    public function __construct() {
         $this->id                   = 'twikey';
         $this->has_fields           = true;
         $this->method_title         = __('Twikey', 'twikey');
@@ -25,29 +24,118 @@ class TwikeyGateway extends WC_Payment_Gateway
 
         add_action( 'verify_payments', array($this, 'verify_payments') );
         add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
-//        add_action( 'woocommerce_thankyou_' . $this->id, array( $this, 'thankyou_page' ) );
-        
+
+        // allow exit url to work
+        add_action( 'woocommerce_api_twikey_exit', array( $this, 'exit_handler' ) );
+        add_action( 'woocommerce_api_twikey_webhook', array( $this, 'hook_handler' ) );
+
+        // allow verify of payment
+        add_action( 'woocommerce_order_action_order_verify_twikey', array( $this, 'verify_order_action' ) );
+
         if ( class_exists( 'WC_Subscriptions_Order' ) ) {
             add_action( 'woocommerce_scheduled_subscription_payment_' . $this->id, array( $this, 'scheduled_subscription_payment' ), 10, 2 );
-            
+
             add_action( 'subscriptions_activated_for_order', array( $this, 'scheduled_subscription_activate' ), 10, 2 );
-            
+
             add_action( 'woocommerce_subscription_status_updated', array( $this, 'scheduled_subscription_status_updated' ), 10, 2 );
             add_action( 'woocommerce_subscription_cancelled_' . $this->id, array( $this, 'cancel_subscription' ) );
         }
-        
+
         $this->init_settings();
     }
 
-    public function getEndpoint($test){
-        if($test == 'yes'){
-            return "https://api.beta.twikey.com";
+    public function verify_order_action(WC_Order $order ) {
+        try{
+            $tc  = $this->getTwikey();
+            $status = $tc->getPaymentStatus(null,$order->get_id());
+
+            $entry = $status->Entries[0];
+            $this->updateOrder($order, $entry);
         }
-        return "https://api.twikey.com";
+        catch (TwikeyException $e){
+            wp_die("Error verifying with Twikey: ".$e->getMessage());
+        }
     }
-    
+
+    function updateOrder(WC_Order $order, $entry){
+        $orderState = $entry->state;
+        if($orderState == 'PAID'){
+            TwikeyLoader::log("Set payment date of order #".$entry->bkdate,WC_Log_Levels::INFO);
+            $order->add_order_note('Payment received via Twikey on '.$entry->bkdate);
+            $order->set_date_paid($entry->bkdate);
+            $order->payment_complete($entry->id);
+        }
+        else if($orderState == 'OPEN'){
+            TwikeyLoader::log("Order was pending : ".$order->get_id());
+        }
+        else if($orderState == 'ERROR'){
+            TwikeyLoader::log("Order was in error : ".$order->get_id());
+            $order->add_order_note('[Twikey] Message from the bank: '.$entry->bkmsg );
+            $order->set_date_paid(null);
+            $order->set_status('failed');
+            $order->save();
+        }
+    }
+
+    public function exit_handler(){
+
+        $settings = $this->getSettings();
+        $website_key = $settings['testmode'];
+
+        if(!$website_key){
+            TwikeyLoader::log("No website_key set to validate the exit", WC_Log_Levels::ERROR);
+            exit();
+        }
+
+        $mandateNumber = $_GET['mndt'];
+        $status = $_GET['status'];
+        $signature = strtolower($_GET['s']); // signature coming from twikey is hex uppercase
+        $token = $_GET['t'];
+        TwikeyLoader::log("Called webhook ". $mandateNumber, WC_Log_Levels::INFO);
+
+        $order_id = wc_clean($mandateNumber);
+        $order    = wc_get_order( $token );
+
+        if($order){
+            try{
+                Twikey::validateSignature($website_key,$mandateNumber,$status,$token,$signature);
+                $order->update_status( 'on-hold', 'Awaiting payment confirmation from bank' );
+                // Remove cart.
+                WC()->cart->empty_cart();
+
+                // Return thank you page redirect.
+                $return_url = $this->get_return_url($order);
+                TwikeyLoader::log("Success: Return to thank you page ". $return_url, WC_Log_Levels::DEBUG);
+                wp_safe_redirect($return_url);
+            }
+            catch (Exception $e){
+                $checkout_payment_url = $order->get_checkout_payment_url(true);
+                TwikeyLoader::log("Abort: Back to checkout page ". $checkout_payment_url, WC_Log_Levels::INFO);
+                wp_safe_redirect($checkout_payment_url);
+            }
+        }
+        else {
+            TwikeyLoader::log("Abort no order ". $order_id, WC_Log_Levels::INFO);
+            status_header( 400 );
+        }
+        exit;
+    }
+
+    public function hook_handler(){
+        if(isset($_GET['type']) && !isset($_GET['id'])){
+            $type = $_GET['type'];
+            TwikeyLoader::log("Got callback from Twikey type=". $type, WC_Log_Levels::DEBUG);
+            if($type === 'payment'){
+                $this->verify_payments();
+            }
+            status_header(200, $type);
+        }
+        else {
+            status_header(200, "All ok");
+        }
+    }
+
     public function init_settings($form_fields = array()) {
-        
         $this->form_fields = array(
             'enabled' => array(
                 'title'   => __( 'Enable/Disable', 'woocommerce' ),
@@ -68,30 +156,34 @@ class TwikeyGateway extends WC_Payment_Gateway
                 'description' => __( 'Get your API credentials from Twikey.', 'twikey' ),
                 'default'     => '',
             ),
+            'websitekey' => array(
+                'title'       => __( 'Website key', 'twikey' ),
+                'type'        => 'text',
+                'description' => __( 'Get your Website key from Twikey to allow validating the exiturl.', 'twikey' ),
+                'default'     => '',
+            ),
             'ct' => array(
                 'title'       => __( 'Template ID', 'twikey' ),
                 'type'        => 'number',
                 'description' => __( 'Twikey Template ID', 'twikey' ),
                 'default'     => '',
-            )
+            ),
+            'exiturl' => array(
+                'title'       => __( 'Twikey Configuration', 'twikey' ),
+                'type'        => 'title',
+                /* translators: webhook URL */
+                'description' => $this-> conf_desc(),
+            ),
         );
 
         parent::init_settings();
     }
 
-    public function get_method_title() {
-        echo "<img src=\"https://www.twikey.com/img/logo.png\" style='margin: 10px'/>";
-    }
-    
-    public function get_method_description() {
-        echo file_get_contents(dirname(__FILE__) . '/../include/description.html');
-    }
-
     public function get_icon() {
         echo '<img src="//www.twikey.com/img/butterfly.svg" alt="Twikey" width="65"/>';
     }
-    
-    public function payment_fields() {        
+
+    public function payment_fields() {
         $description = '';
         $description_text = $this->get_option('description');
         if (!empty($description_text))
@@ -99,65 +191,50 @@ class TwikeyGateway extends WC_Payment_Gateway
 
         echo $description;
     }
-    
-    function getSettings() {
-        return (array)get_option($this->get_option_key());
-    }
-    
+
     public function verify_payments(){
         TwikeyLoader::log("Checking payments");
-        $settings = $this->getSettings();
-        $tc   = new TwikeyWoo();
-        $tc->setEndpoint($this->getEndpoint($settings['testmode']));
-        $tc->setApiToken($settings['apikey']);
-        
+        $tc   = $this->getTwikey();
         $feed = $tc->getTransactionFeed();
         foreach ( $feed->Entries as $entry ){
             $order = wc_get_order( $entry->ref );
             if($order){
-                TwikeyLoader::log("Update payment status of order #".$entry->ref);
-                if($entry->state == 'PAID'){
-                    TwikeyLoader::log("Set payment date of order #".$entry->bkdate,WC_Log_Levels::INFO);
-                    $order->add_order_note('Payment received via Twikey on '.$entry->bkdate);
-                    $order->set_date_paid($entry->bkdate);
-                    $order->payment_complete();
-                }
-                else if($entry->state != 'OPEN'){
-                    $order->update_status('failed','Payment failed via Twikey : '.$entry->bkmsg);
-                }
+                $this->updateOrder($order, $entry);
             }
             else {
                 TwikeyLoader::log("No order found for #".$entry->ref,WC_Log_Levels::WARNING);
             }
         }
     }
-    
+
     private function getUserLang(){
         $default_lang='en';
         $langs=array('en', 'nl', 'fr', 'de', 'pt', 'it', 'es');
         $client_lang = substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2);
         return in_array($client_lang, $langs) ? $client_lang : $default_lang;
     }
-    
+
     public function process_payment($order_id){
-        
+
         global $woocommerce;
         $order = new WC_Order($order_id);
         $lang = $this->getUserLang();
         $settings = $this->getSettings();
-        
-        $tc   = new TwikeyWoo();
-        $tc->setEndpoint($this->getEndpoint($settings['testmode']));
-        $tc->setApiToken($settings['apikey']);
-        $tc->setTemplateId($settings['ct']);
-        $tc->setLang($lang);
+
+        $tc = $this->getTwikey($lang);
+
+        $description = "Order ".$order->get_order_number();
+        $ref = $order->get_order_number();
+        $amount = round($order->get_total());
 
         $my_order = array(
             "ct"                    => $settings['ct'],
             "check"                 => true,
-            "order_id"              => $order->get_order_number(),
-            "amount"                => round($order->get_total()),
-            'id'                    => 0,
+            "order_id"              => $ref,
+            "token"                  => $ref,
+            "_txr"                  => $ref,
+            "_txd"                  => $description,
+            "amount"                => $amount,
             'email'                 => $order->get_billing_email(),
             'firstname'             => $order->get_billing_first_name(),
             'lastname'              => $order->get_billing_last_name(),
@@ -169,11 +246,11 @@ class TwikeyGateway extends WC_Payment_Gateway
             'mobile'                => $order->get_billing_phone(),
             'l'                     => $lang
         );
-        
+
         try {
             $msg = null;
             $tr = $tc->createNew($my_order);
-            
+
             if(property_exists($tr,'url')){
                 $url = $tr->url;
                 if(property_exists($tr,'mndtId')){
@@ -184,50 +261,52 @@ class TwikeyGateway extends WC_Payment_Gateway
                 return array(   'result'    => 'success','redirect'  => $url);
             }
             else if(property_exists($tr,'mndtId')){
-                 $ip = $_SERVER["REMOTE_ADDR"];
-                 if ( isset($_SERVER['HTTP_X_FORWARDED_FOR']) ) {
-                     $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
-                 }
-                     
+                $ip = $_SERVER["REMOTE_ADDR"];
+                if ( isset($_SERVER['HTTP_X_FORWARDED_FOR']) ) {
+                    $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+                }
+
                 $mndtId = $tr->mndtId;
-                 $tx = $tc->newTransaction(array(
-                     "mndtId"        => $mndtId,
-                     "message"       => "Order ".$order->get_order_number(),
-                     "ref"           => $order->get_order_number(),
-                     "amount"        => $order->get_total(),
-                     "place"         => $ip
-                 ));
-    
-                 if(property_exists($tx,'Entries')){
-                     $txentry = $tx->Entries[0];
-                 
-                     $order->update_meta_data(self::TWIKEY_MNDT_ID, $mndtId);
-                     $order->set_transaction_id($txentry->id);
-                     $order->save();
-                     
-                     // Reduce stock levels
-                     wc_reduce_stock_levels($order_id);
-    
-                     // Remove cart
-                     $woocommerce->cart->empty_cart();
-    
-                     // Return thankyou redirect
-                     return array(
-                         'result' => 'success',
-                         'redirect' => $this->get_return_url( $order )
-                     );
-                 }
-                 else {
-                     TwikeyLoader::log("Error adding transaction : ".json_encode($tx), WC_Log_Levels::ERROR);
-                     wc_add_notice($tx->message, 'error');
-                     return array('result' => 'error','redirect' => wc_get_cart_url());
-                 }
+                $tx = $tc->newTransaction(array(
+                    "mndtId"        => $mndtId,
+                    "message"       => $description,
+                    "ref"           => $ref,
+                    "amount"        => $amount,
+                    "place"         => $ip
+                ));
+
+                if(property_exists($tx,'Entries')){
+                    $txentry = $tx->Entries[0];
+
+                    $order->update_status( 'on-hold', 'Awaiting payment confirmation from bank' );
+
+                    $order->update_meta_data(self::TWIKEY_MNDT_ID, $mndtId);
+                    $order->set_transaction_id($txentry->id);
+                    $order->save();
+
+                    // Reduce stock levels
+                    wc_reduce_stock_levels($order_id);
+
+                    // Remove cart
+                    $woocommerce->cart->empty_cart();
+
+                    // Return thankyou redirect
+                    return array(
+                        'result' => 'success',
+                        'redirect' => $this->get_return_url( $order )
+                    );
+                }
+                else {
+                    TwikeyLoader::log("Error adding transaction : ".json_encode($tx), WC_Log_Levels::ERROR);
+                    wc_add_notice($tx->message, 'error');
+                    return array('result' => 'error','redirect' => wc_get_cart_url());
+                }
             }
             else {
                 TwikeyLoader::log("Invalid response from Twikey: ".print_r($tr, true), WC_Log_Levels::ERROR);
                 throw new Exception("Invalid response from Twikey");
             }
-            
+
         } catch (Exception $e) {
             $msg = htmlspecialchars($e->getMessage());
             TwikeyLoader::log($msg,WC_Log_Levels::ERROR);
@@ -235,20 +314,14 @@ class TwikeyGateway extends WC_Payment_Gateway
             return array('result' => 'error','redirect'  => wc_get_cart_url() );
         }
     }
-    
-    public function scheduled_subscription_payment($amount_to_charge, $new_order ) {
 
+    public function scheduled_subscription_payment($amount_to_charge,WC_Order $new_order ) {
 
         $mndtId = $new_order->get_meta(self::TWIKEY_MNDT_ID);
         $msg  = sprintf( '%1$s - Order %2$s', wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ), $new_order->get_id() );
         TwikeyLoader::log("Schedule new tx: ".$msg.' for '.$mndtId, WC_Log_Levels::INFO);
 
-        $settings = $this->getSettings();
-
-        $tc   = new TwikeyWoo();
-        $tc->setEndpoint($this->getEndpoint($settings['testmode']));
-        $tc->setApiToken($settings['apikey']);
-        $tc->setTemplateId($settings['ct']);
+        $tc = $this->getTwikey();
 
         $my_order = array(
             "mndtId"                 => $mndtId,
@@ -275,20 +348,16 @@ class TwikeyGateway extends WC_Payment_Gateway
             TwikeyLoader::log("Error adding transaction : ".json_encode($tx), WC_Log_Levels::ERROR);
             wc_add_notice($tx->message, 'error');
             WC_Subscriptions_Manager::process_subscription_payment_failure_on_order( $new_order );
-        }    
+        }
     }
-    
+
     public function scheduled_subscription_activate($order_id){
         $order = new WC_Order($order_id);
         TwikeyLoader::log("Activating order ".$order_id, WC_Log_Levels::INFO);
         $mndtId = $order->get_meta(self::TWIKEY_MNDT_ID);
-        
-        $settings = $this->getSettings();
 
         TwikeyLoader::log("Activating mndtId=".$mndtId, WC_Log_Levels::INFO);
-        $tc = new TwikeyWoo();
-        $tc->setEndpoint($this->getEndpoint($settings['testmode']));
-        $tc->setApiToken($settings['apikey']);
+        $tc = $this->getTwikey();
         $tc->updateMandate(array(
                 'mndtId' => $mndtId,
                 '_state' => 'active'
@@ -312,9 +381,9 @@ class TwikeyGateway extends WC_Payment_Gateway
     }
 
     public function scheduled_subscription_status_updated($subscription, $new_status){
-        
+
         $mndtId = $subscription->get_meta(self::TWIKEY_MNDT_ID);
-        
+
         if(!$mndtId)
             return;
 
@@ -336,19 +405,16 @@ class TwikeyGateway extends WC_Payment_Gateway
                 );
                 break;
             }
-            case 'cancelled': 
+            case 'cancelled':
             case 'expired': {
                 // explicit via cancel
                 break;
             }
         }
 
-        $tc = new TwikeyWoo();
-        $settings = $this->getSettings();
-        $tc->setEndpoint($this->getEndpoint($settings['testmode']));
-        $tc->setApiToken($settings['apikey']);
+        $tc = $this->getTwikey();
         $tc->updateMandate($payload);
-        
+
         TwikeyLoader::log("Sending status $new_status for $mndtId", WC_Log_Levels::INFO);
     }
 
@@ -356,28 +422,54 @@ class TwikeyGateway extends WC_Payment_Gateway
         $mndtId = $cancel_subscription->get_meta(self::TWIKEY_MNDT_ID);
         TwikeyLoader::log("Cancelling ".$mndtId, WC_Log_Levels::INFO);
 
-        $tc = new TwikeyWoo();
-        $settings = $this->getSettings();
-        $tc->setEndpoint($this->getEndpoint($settings['testmode']));
-        $tc->setApiToken($settings['apikey']);
+        $tc = $this->getTwikey();
         $tc->cancelMandate($mndtId);
     }
-    
+
+    private function conf_desc(){
+        $exiturl = add_query_arg( 'wc-api', 'twikey_exit&mndt={0}&status={1}&s={3}&t={4}', trailingslashit( get_home_url() ) );
+        $webhook = add_query_arg( 'wc-api', 'twikey_webhook', trailingslashit( get_home_url() ) );
+        $base = 'Please configure your Twikey environment with the following urls:<ul class="ul-square">' .
+            '<li><a href="https://www.twikey.com/r/admin#/c/contracttemplate" target="_blank">Your Twikey template</a>: use <strong style="background-color:#ddd;">&nbsp;%s&nbsp;</strong> as exit url. This will enable you have a proper checkout.</li>' .
+            '<li><a href="https://www.twikey.com/r/admin#/c/settings/ei" target="_blank">Twikey API settings</a>: use <strong style="background-color:#ddd;">&nbsp;%s&nbsp;</strong> as webhook for timely order updates</li>' .
+            '</ul>';
+        return sprintf( $base, $exiturl, $webhook );
+    }
+
+    private function getSettings() {
+        return (array)get_option($this->get_option_key());
+    }
+
+    private function getTwikey($lang = 'en') {
+        TwikeyLoader::log("New Twikey instance",WC_Log_Levels::INFO);
+        $tc = new TwikeyWoo();
+        $tc->setTestmode('yes' === $this->get_option( 'testmode', 'no' ));
+        $tc->setApiToken($this->get_option( 'apikey' ));
+        $tc->setTemplateId($this->get_option( 'ct' ));
+        $tc->setLang($lang);
+
+        return $tc;
+    }
 }
 
 class TwikeyWoo extends Twikey {
+    /**
+     * @throws TwikeyException
+     */
     public function checkResponse($curlHandle, $server_output, $context = "No context") {
         if (!curl_errno($curlHandle)) {
+
+            TwikeyLoader::log(sprintf("%s : Error = %s (%s)", $context, curl_error($curlHandle),$this->endpoint),WC_Log_Levels::ERROR);
             if ($http_code = curl_getinfo($curlHandle, CURLINFO_HTTP_CODE) >= 400) {
-                TwikeyLoader::log(sprintf("%s : Error = %s", $context, $server_output),WC_Log_Levels::ERROR);
-                throw new Exception($context);
+                TwikeyLoader::log(sprintf("%s : Error = %s (%s)", $context, $server_output,$this->endpoint),WC_Log_Levels::ERROR);
+                throw new TwikeyException($context);
             }
         }
         if (TWIKEY_DEBUG) {
-            TwikeyLoader::log(sprintf("Response %s : %s", $context, $server_output),WC_Log_Levels::INFO);
+            TwikeyLoader::log(sprintf("Response %s : %s (%s)", $context, $server_output,$this->endpoint),WC_Log_Levels::INFO);
         }
     }
-    
+
     public function debugRequest($payload){
         if (TWIKEY_DEBUG) {
             TwikeyLoader::log(sprintf("Request %s ", $payload), WC_Log_Levels::DEBUG);
