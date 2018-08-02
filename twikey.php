@@ -1,76 +1,216 @@
 <?php
-/*
-  Plugin Name: Twikey
-  Plugin URI: https://www.twikey.com
-  Description: Twikey Payment Plugin
-  Author: Twikey
-  Author URI:http://www.twikey.com
-  Version: 2.0 
+/* Please take the latest version from https://github.com/twikey/snippets/blob/master/php/Twikey.php */
+class Twikey {
+    
+    const VERSION = '2.0.1';
+    
+    public $templateId;
+    public $debug;
+    public $endpoint;
+    protected $apiToken;
+    protected $lang = 'en';
 
-  Copyright: 2017 Twikey(email : support@twikey.com)
-  License: GNU General Public License v3.0
-  License URI: http://www.gnu.org/licenses/gpl-3.0.html
-*/
+    protected $auth;
 
-//Autoloader laden en registreren
-require_once dirname(__FILE__) . '/classes/TwikeyLoader.php';
-
-//plugin functies inladen
-require_once( ABSPATH . '/wp-admin/includes/plugin.php' );
-
-//textdomain inladen
-load_plugin_textdomain( 'twikey', false, plugin_basename( dirname( __FILE__ ) ) . "/i18n/languages" );
-
-function error_woocommerce_not_active() {
-    echo '<div class="error"><p>' . __('To use the Twikey plugin it is required that woocommerce is active', 'twikey') . '</p></div>';
-}
-
-function error_curl_not_installed() {
-    echo '<div class="error"><p>' . __('Curl is not installed.<br />In order to use the Twikey plug-in, you must install CURL.<br />Ask your system administrator to install php_curl', 'twikey') . '</p></div>';
-}
-
-// Curl is niet geinstalleerd. foutmelding weergeven
-if (!function_exists('curl_version')) {
-    add_action('admin_notices', __('error_curl_not_installed', 'twikey'));
-}
-
-if (!defined('VERSION_TWIKEY')) {
-    define('VERSION_TWIKEY', "2.0.0");
-}
-
-define('TWIKEY_DEBUG',false);
-
-add_action('plugins_loaded', 'init_twikey');
-function init_twikey(){
-    if (is_plugin_active('woocommerce/woocommerce.php') || is_plugin_active_for_network('woocommerce/woocommerce.php')) {
-        TwikeyLoader::register();
-    } else {
-        // Woocommerce is niet actief. foutmelding weergeven
-        add_action('admin_notices', "WooCommerce is not yet active");
-    }   
-}
-
-register_activation_hook(__FILE__, 'register');
-register_deactivation_hook( __FILE__, 'deregister' );
-
-function register(){
-    TwikeyLoader::log("Scheduling tasks");
-    if ( ! wp_next_scheduled( 'twikey_scheduled_verifyPayments' ) ){
-        wp_schedule_event(time(),'twicedaily','twikey_scheduled_verifyPayments');
-        TwikeyLoader::log("Registered Twikey scheduled tasks");
+    public function setEndpoint($endpoint){
+        $this->endpoint = trim($endpoint);
     }
-    // ensure deactivation can be called
-    register_deactivation_hook( __FILE__, array( __CLASS__, 'unschedule_twikey' ) );
-}
 
-function deregister(){
-    wp_clear_scheduled_hook('twikey_scheduled_verifyPayments');
-    TwikeyLoader::log("Unregistering Twikey scheduled tasks");
-}
+    public function setApiToken($apiToken){
+        $this->apiToken = trim($apiToken);
+    }
 
-add_action('twikey_scheduled_verifyPayments', 'twikey_scheduled_verifyPayments');
-function twikey_scheduled_verifyPayments(){
-    // Start the gateways
-    WC()->payment_gateways();
-    do_action('verify_payments');
+    public function setTemplateId($templateId){
+        $this->templateId = trim($templateId);
+    }
+
+    public function setLang($lang){
+        $this->lang = $lang;
+    }
+
+    function authenticate() {
+        
+        if ($this->auth != "")
+            return $this->auth;
+        
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, sprintf("%s/creditor", $this->endpoint));
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, sprintf("apiToken=%s", $this->apiToken));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_USERAGENT, "twikey-php/v".Twikey::VERSION);
+        $server_output = curl_exec($ch);
+        $result = json_decode($server_output);
+        $this->auth = $result->{'Authorization'};
+        $this->checkResponse($ch, $server_output, "Connecting to Twikey!");
+        curl_close($ch);
+        return $this->auth;
+    }
+
+    public function createNew($data) {
+        $this->auth = $this->authenticate();
+
+        $payload = http_build_query($data);
+
+        $this->debugRequest($payload);
+        
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, sprintf("%s/creditor/prepare", $this->endpoint));
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array("Authorization: $this->auth","Accept-Language: $this->lang"));
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_USERAGENT, "twikey-php/v".Twikey::VERSION);
+        $server_output = curl_exec($ch);
+        $this->checkResponse($ch, $server_output, "Creating a new mandate!");
+        curl_close($ch);
+        return json_decode($server_output);
+    }
+
+    public function updateMandate($data) {
+        $this->auth = $this->authenticate();
+
+        $payload = http_build_query($data);
+
+        $this->debugRequest($payload);
+        
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, sprintf("%s/creditor/mandate/update", $this->endpoint));
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array("Authorization: $this->auth","Accept-Language: $this->lang"));
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_USERAGENT, "twikey-php/v".Twikey::VERSION);
+        $server_output = curl_exec($ch);
+        $this->checkResponse($ch, $server_output, "Update mandate");
+        curl_close($ch);
+        return json_decode($server_output);
+    }
+
+    public function cancelMandate($mndtId) {
+        $this->auth = $this->authenticate();
+        
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, sprintf("%s/creditor/mandate?mndtId=".$mndtId, $this->endpoint));
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array("Authorization: $this->auth","Accept-Language: $this->lang"));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_USERAGENT, "twikey-php/v".Twikey::VERSION);
+        $server_output = curl_exec($ch);
+        $this->checkResponse($ch, $server_output, "Cancelled mandate");
+        curl_close($ch);
+        return json_decode($server_output);
+    }
+
+    public function newTransaction($data)
+    {
+        $this->auth = $this->authenticate();
+
+        $payload = http_build_query($data);
+
+        $this->debugRequest($payload);
+        
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, sprintf("%s/creditor/transaction", $this->endpoint));
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array("Authorization: $this->auth","Accept-Language: $this->lang"));
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_USERAGENT, "twikey-php/v".Twikey::VERSION);
+        $server_output = curl_exec($ch);
+        $this->checkResponse($ch, $server_output, "Creating a new transaction!");
+        curl_close($ch);
+        return json_decode($server_output);
+    }
+
+    public function getPayments($id, $detail) {
+        $this->auth = $this->authenticate();
+
+        $payload = http_build_query(array(
+            "id" => $id,
+            "detail" => $detail
+        ));
+
+        $this->debugRequest($payload);
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, sprintf("%s/creditor/payment?%s", $this->endpoint, $payload));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array("Authorization: $this->auth"/*, "X-RESET: true"*/,"Accept-Language: $this->lang"));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_USERAGENT, "twikey-php/v".Twikey::VERSION);
+        $server_output = curl_exec($ch);
+        $this->checkResponse($ch, $server_output, "Retrieving payments!");
+        curl_close($ch);
+
+        return json_decode($server_output);
+    }
+
+    public function getPaymentStatus($txid,$ref) {
+        $this->auth = $this->authenticate();
+
+        if(empty($ref)){
+            $payload = http_build_query(array("id" => $txid));
+        }
+        else {
+            $payload = http_build_query(array("ref" => $ref));    
+        }
+
+        $this->debugRequest($payload);
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, sprintf("%s/creditor/transaction/detail?%s", $this->endpoint, $payload));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array("Authorization: $this->auth"/*, "X-RESET: true"*/,"Accept-Language: $this->lang"));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_USERAGENT, "twikey-php/v".Twikey::VERSION);
+        $server_output = curl_exec($ch);
+        $this->checkResponse($ch, $server_output, "Retrieving payments!");
+        curl_close($ch);
+
+        return json_decode($server_output);
+    }
+
+    public function getTransactionFeed() {
+        $this->auth = $this->authenticate();
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, sprintf("%s/creditor/transaction", $this->endpoint));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array("Authorization: $this->auth"/*, "X-RESET: true"*/,"Accept-Language: $this->lang"));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_USERAGENT, "twikey-php/v".Twikey::VERSION);
+        $server_output = curl_exec($ch);
+        $this->checkResponse($ch, $server_output, "Retrieving transaction feed!");
+        curl_close($ch);
+
+        return json_decode($server_output);
+    }
+
+    public function checkResponse($curlHandle, $server_output, $context = "No context") {
+        if (!curl_errno($curlHandle)) {
+            $http_code = curl_getinfo($curlHandle, CURLINFO_HTTP_CODE);
+            if ($http_code == 400) { // normal user error
+                try {
+                    $jsonError = json_decode($server_output);
+                    $translatedError = $jsonError->message;
+                    error_log(sprintf("%s : Error = %s [%d]", $context, $translatedError, $http_code), 0);
+                } catch (Exception $e) {
+                    $translatedError = "General error";
+                    error_log(sprintf("%s : Error = %s [%d]", $context, $server_output, $http_code), 0);
+                }
+                throw new Exception($translatedError);
+            }
+            else if ($http_code > 400) {
+                error_log(sprintf("%s : Error = %s", $context, $server_output), 0);
+                throw new Exception("General error");
+            }
+        } 
+        if (TWIKEY_DEBUG) {
+            error_log(sprintf("Response %s : %s", $context, $server_output), 0);
+        }
+    }
+    
+    public function debugRequest($msg){
+        if (TWIKEY_DEBUG) {
+            error_log('Request : '.$msg, 0);
+        } 
+    }
 }
