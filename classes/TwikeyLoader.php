@@ -39,11 +39,11 @@ class TwikeyLoader {
         if ( is_cart() ||  is_checkout()  ) {
 
             $isCard = false;
-            // Loop through all products in the Cart        
+            // Loop through all products in the Cart
 //            foreach (WC()->cart->get_cart() as $cart_item_key => $cart_item) {
 //                $productId = $cart_item['product_id'];
 //                $term_list = wp_get_post_terms($productId, 'product_cat');
-////                SELF::log("$term_list = ".print_r($term_list,true));
+////                SELF::log("$term_list = ".print_r($term_list,true),WC_Log_Levels::NOTICE);
 //                $cat = $term_list[0] -> slug;
 //                if ($cat === 'hoodies') {
 //                    $isCard = true;
@@ -65,11 +65,22 @@ class TwikeyLoader {
         return $gateways;
     }
 
-    public static function log( $message , $level = WC_Log_Levels::NOTICE )  {
+    public static function log( $message , $level )  {
         if ( empty( self::$log ) ) {
-            self::$log = new WC_Logger();
+            self::$log = wc_get_logger();
         }
-        self::$log->add( 'Twikey', $message ,$level);
+        if(!$level)
+            $level = WC_Log_Levels::NOTICE;
+        self::$log->log($level, $message,array ( 'source' => 'Twikey' ) );
     }
 
+    public static function logHttp( $message , $level )  {
+        if ( empty( self::$log ) ) {
+            self::$log = wc_get_logger();
+        }
+        if(!$level)
+            $level = WC_Log_Levels::NOTICE;
+        self::$log->log($level, $message ,array ( 'source' => 'Twikey-Http' ));
+    }
 }
+
