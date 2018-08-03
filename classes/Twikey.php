@@ -5,6 +5,7 @@ class Twikey {
     const VERSION = '2.1.0';
 
     public $templateId;
+    public $websiteKey;
     public $endpoint = "https://api.twikey.com";
     protected $apiToken;
     protected $lang = 'en';
@@ -32,6 +33,14 @@ class Twikey {
         $this->templateId = trim($templateId);
     }
 
+    public function getTemplateId(){
+        return $this->templateId;
+    }
+
+    public function setWebsiteKey($websiteKey){
+        $this->websiteKey = trim($websiteKey);
+    }
+
     public function setLang($lang){
         $this->lang = $lang;
     }
@@ -49,7 +58,7 @@ class Twikey {
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, sprintf("apiToken=%s", $this->apiToken));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        self::setCurlDefaults($ch);
+        $this->setCurlDefaults($ch);
 
         $server_output = curl_exec($ch);
         $this->checkResponse($ch, $server_output, "Authentication");
@@ -57,21 +66,24 @@ class Twikey {
 
         $result = json_decode($server_output);
         if(isset($result->{'Authorization'})){
-            error_log("Set ".$server_output, 0);
             $this->auth = $result->{'Authorization'};
         }
         else if(isset($result->{'message'})){
-            error_log("Error ".$server_output, 0);
-            throw new TwikeyException($result->{'message'});
+            if(TWIKEY_HTTP_DEBUG)
+                $this->log("Error ".$server_output);
+            throw new TwikeyException("Twikey: ".$result->{'message'});
         }
         else {
-            error_log("Twikey unreachable: ".$server_output, 0);
-            throw new TwikeyException($server_output);
+            if(TWIKEY_HTTP_DEBUG)
+                $this->log("Twikey unreachable  @ ".$this->endpoint."(Response=".$server_output.")");
+            throw new TwikeyException("Twikey unreachable");
         }
         return $this->auth;
     }
 
     /**
+     * @param $data array
+     * @return array|mixed|object
      * @throws TwikeyException
      */
     public function createNew($data) {
@@ -87,7 +99,7 @@ class Twikey {
         curl_setopt($ch, CURLOPT_HTTPHEADER, array("Authorization: $this->auth","Accept-Language: $this->lang"));
         curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        self::setCurlDefaults($ch);
+        $this->setCurlDefaults($ch);
         
         $server_output = curl_exec($ch);
         $this->checkResponse($ch, $server_output, "Creating a new mandate!");
@@ -96,6 +108,8 @@ class Twikey {
     }
 
     /**
+     * @param $data
+     * @return array
      * @throws TwikeyException
      */
     public function updateMandate($data) {
@@ -111,7 +125,7 @@ class Twikey {
         curl_setopt($ch, CURLOPT_HTTPHEADER, array("Authorization: $this->auth","Accept-Language: $this->lang"));
         curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        self::setCurlDefaults($ch);
+        $this->setCurlDefaults($ch);
         $server_output = curl_exec($ch);
         $this->checkResponse($ch, $server_output, "Update mandate");
         curl_close($ch);
@@ -119,6 +133,8 @@ class Twikey {
     }
 
     /**
+     * @param $mndtId
+     * @return array|mixed|object
      * @throws TwikeyException
      */
     public function cancelMandate($mndtId) {
@@ -129,7 +145,7 @@ class Twikey {
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
         curl_setopt($ch, CURLOPT_HTTPHEADER, array("Authorization: $this->auth","Accept-Language: $this->lang"));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        self::setCurlDefaults($ch);
+        $this->setCurlDefaults($ch);
         $server_output = curl_exec($ch);
         $this->checkResponse($ch, $server_output, "Cancelled mandate");
         curl_close($ch);
@@ -155,7 +171,7 @@ class Twikey {
         curl_setopt($ch, CURLOPT_HTTPHEADER, array("Authorization: $this->auth","Accept-Language: $this->lang"));
         curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        self::setCurlDefaults($ch);
+        $this->setCurlDefaults($ch);
         $server_output = curl_exec($ch);
         $this->checkResponse($ch, $server_output, "Creating a new transaction!");
         curl_close($ch);
@@ -163,6 +179,8 @@ class Twikey {
     }
 
     /**
+     * @param $data
+     * @return array|mixed|object
      * @throws TwikeyException
      */
     public function newLink($data) {
@@ -175,7 +193,7 @@ class Twikey {
         curl_setopt($ch, CURLOPT_HTTPHEADER, array("Authorization: $this->auth","Accept-Language: $this->lang"));
         curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        self::setCurlDefaults($ch);
+        $this->setCurlDefaults($ch);
         $server_output = curl_exec($ch);
         $this->checkResponse($ch, $server_output, "Creating a new paymentlink!");
         curl_close($ch);
@@ -183,6 +201,9 @@ class Twikey {
     }
 
     /**
+     * @param $linkid
+     * @param $ref 
+     * @return array|mixed|object
      * @throws TwikeyException
      */
     public function verifyLink($linkid,$ref) {
@@ -201,7 +222,7 @@ class Twikey {
         curl_setopt($ch, CURLOPT_URL, sprintf("%s/creditor/payment/link?%s", $this->endpoint,$payload));
         curl_setopt($ch, CURLOPT_HTTPHEADER, array("Authorization: $this->auth","Accept-Language: $this->lang"));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        self::setCurlDefaults($ch);
+        $this->setCurlDefaults($ch);
         
         $server_output = curl_exec($ch);
         $this->checkResponse($ch, $server_output, "Verifying a paymentlink ".$payload);
@@ -210,6 +231,9 @@ class Twikey {
     }
 
     /**
+     * @param $id
+     * @param $detail
+     * @return array|mixed|object
      * @throws TwikeyException
      */
     public function getPayments($id, $detail) {
@@ -226,7 +250,7 @@ class Twikey {
         curl_setopt($ch, CURLOPT_URL, sprintf("%s/creditor/payment?%s", $this->endpoint, $payload));
         curl_setopt($ch, CURLOPT_HTTPHEADER, array("Authorization: $this->auth"/*, "X-RESET: true"*/,"Accept-Language: $this->lang"));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        self::setCurlDefaults();
+        $this->setCurlDefaults($ch);
         $server_output = curl_exec($ch);
         $this->checkResponse($ch, $server_output, "Retrieving payments!");
         curl_close($ch);
@@ -235,6 +259,9 @@ class Twikey {
     }
 
     /**
+     * @param $txid
+     * @param $ref
+     * @return array|mixed|object
      * @throws TwikeyException
      */
     public function getPaymentStatus($txid,$ref) {
@@ -253,7 +280,7 @@ class Twikey {
         curl_setopt($ch, CURLOPT_URL, sprintf("%s/creditor/transaction/detail?%s", $this->endpoint, $payload));
         curl_setopt($ch, CURLOPT_HTTPHEADER, array("Authorization: $this->auth"/*, "X-RESET: true"*/,"Accept-Language: $this->lang"));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        self::setCurlDefaults($ch);
+        $this->setCurlDefaults($ch);
         
         $server_output = curl_exec($ch);
         $this->checkResponse($ch, $server_output, "Retrieving payments!");
@@ -272,7 +299,7 @@ class Twikey {
         curl_setopt($ch, CURLOPT_URL, sprintf("%s/creditor/transaction", $this->endpoint));
         curl_setopt($ch, CURLOPT_HTTPHEADER, array("Authorization: $this->auth"/*, "X-RESET: true"*/,"Accept-Language: $this->lang"));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        self::setCurlDefaults($ch);
+        $this->setCurlDefaults($ch);
         
         $server_output = curl_exec($ch);
         $this->checkResponse($ch, $server_output, "Retrieving transaction feed!");
@@ -281,58 +308,83 @@ class Twikey {
         return json_decode($server_output);
     }
 
-    private static function setCurlDefaults($ch){
+    private function setCurlDefaults($ch){
         curl_setopt($ch, CURLOPT_USERAGENT, "twikey-php/v".Twikey::VERSION);
-        if(DEBUG){
+        if(TWIKEY_HTTP_DEBUG){
             curl_setopt($ch, CURLOPT_VERBOSE, true);
         }
     }
 
     /**
+     * @param $mandateNumber
+     * @param $status
+     * @param $token
+     * @param $signature
+     * @return bool
      * @throws TwikeyException
      */
-    public function checkResponse($curlHandle, $server_output, $context = "No context") {
-        if (!curl_errno($curlHandle)) {
-            $http_code = curl_getinfo($curlHandle, CURLINFO_HTTP_CODE);
-            if ($http_code == 400) { // normal user error
-                try {
-                    $jsonError = json_decode($server_output);
-                    $translatedError = $jsonError->message;
-                    error_log(sprintf("%s : Error = %s [%d] (%s)", $context, $translatedError, $http_code, $this->endpoint), 0);
-                } catch (Exception $e) {
-                    $translatedError = "General error";
-                    error_log(sprintf("%s : Error = %s [%d] (%s)", $context, $server_output, $http_code, $this->endpoint), 0);
-                }
-                throw new TwikeyException($translatedError);
-            }
-            else if ($http_code > 400) {
-                error_log(sprintf("%s : Error = %s (%s)", $context, $server_output, $this->endpoint), 0);
-                throw new TwikeyException("General error");
-            }
+    public function validateSignature($mandateNumber,$status,$token,$signature){
+        if(!$this->websiteKey){
+            $this->log("No website_key set to validate the exit");
+            throw new TwikeyException("No website_key set to validate the exit");
         }
-        if (TWIKEY_DEBUG) {
-            error_log(sprintf("Response %s : %s", $context, $server_output), 0);
-        }
-        return $server_output;
-    }
-
-    /**
-     * @throws TwikeyException
-     */
-    public static function validateSignature($website_key,$mandateNumber,$status,$token,$signature){
-        $calculated = hash_hmac('sha256', sprintf("%s/%s/%s",$mandateNumber,$status,$token), $website_key);
+        $calculated = hash_hmac('sha256', sprintf("%s/%s/%s",$mandateNumber,$status,$token), $this->websiteKey);
         $sig_valid = hash_equals($calculated,$signature);
         if(!$sig_valid){
-            error_log("Invalid signature : expected=".$calculated.' was='.$signature, 0);
+            $this->log("Invalid signature : expected=".$calculated.' was='.$signature);
             throw new TwikeyException('Invalid signature');
         }
         return $sig_valid;
     }
 
-    public function debugRequest($msg){
-        if (TWIKEY_DEBUG) {
-            error_log('Request : '.$msg, 0);
+    /**
+     * @param $curlHandle
+     * @param $server_output
+     * @param string $context
+     * @return mixed
+     * @throws TwikeyException
+     */
+    private function checkResponse($curlHandle, $server_output, $context = "No context") {
+        if (!curl_errno($curlHandle)) {
+            $http_code = curl_getinfo($curlHandle, CURLINFO_HTTP_CODE);
+            if ($http_code == 400) { // normal user error
+                try {
+                    $jsonError = json_decode($server_output);
+                    $translatedError = "Twikey: ".$jsonError->message;
+                    $this->log(sprintf("%s : Error = %s [%d] (%s)", $context, $translatedError, $http_code, $this->endpoint));
+                } catch (Exception $e) {
+                    $translatedError = "Twikey: General error";
+                    $this->log(sprintf("%s : Error = %s [%d] (%s)", $context, $server_output, $http_code, $this->endpoint));
+                }
+                throw new TwikeyException($translatedError,$http_code);
+            }
+            else if ($http_code > 400) {
+                $this->log(sprintf("%s : Error = %s (%s)", $context, $server_output, $this->endpoint));
+                throw new TwikeyException("Twikey: General error",$http_code);
+            }
         }
+        if (TWIKEY_HTTP_DEBUG) {
+            $this->log(sprintf("Response %s : %s", $context, $server_output));
+        }
+        return $server_output;
+    }
+
+    /**
+     * Allows 
+     * @param $msg
+     */
+    public function debugRequest($msg){
+        if (TWIKEY_HTTP_DEBUG) {
+            log('Request : '.$msg, 0);
+        }
+    }
+
+    /**
+     * Override me :)
+     * @param $msg
+     */
+    public function log($msg){
+        error_log($msg);
     }
 }
 

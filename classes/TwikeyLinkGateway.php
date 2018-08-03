@@ -2,15 +2,13 @@
 
 class TwikeyLinkGateway extends WC_Payment_Gateway
 {
-
     public function __construct() {
         $this->id                   = 'twikey-gateway';
-        $this->has_fields           = true;
+        $this->has_fields           = false;
         $this->method_title         = __('Twikey Payment Gateway', 'twikey');
         $this->title                = __('Twikey Payment Gateway', 'twikey');
         $this->method_description   = __('Activate this module to use Twikey', 'twikey');
         $this->description          = __('Pay via card', 'twikey');
-        $this->icon                 = '//www.twikey.com/img/butterfly.svg';
 
         $this->supports = array('products');
 
@@ -27,18 +25,17 @@ class TwikeyLinkGateway extends WC_Payment_Gateway
         $this->init_settings();
     }
 
-    public function verify_order_action($orderId ) {
+    public function verify_order_action(WC_Order $order ) {
         try{
-            $order    = wc_get_order( $orderId );
-
             $tc  = $this->getTwikey();
-            $status = $tc->verifyLink(null,$orderId);
+            $status = $tc->verifyLink(null,$order->get_id());
 
             $entry = $status->Links[0];
             $this->updateOrder($order, $entry);
         }
         catch (TwikeyException $e){
-            wp_die("Error verifying with Twikey: ".$e->getMessage());
+            WC_Admin_Meta_Boxes::add_error( "Error verifying with Twikey:  ".$e->getMessage() );
+            TwikeyLoader::log("Error verifying with Twikey:  ".$e->getMessage(),WC_Log_Levels::ERROR);
         }
     }
 
@@ -50,26 +47,18 @@ class TwikeyLinkGateway extends WC_Payment_Gateway
             $order->payment_complete($entry->id);
         }
         else if($orderState == 'declined' || $orderState == 'expired'){
-            TwikeyLoader::log("Order was in error : ".$order->get_id());
+            TwikeyLoader::log("Order was in error : ".$order->get_id(),WC_Log_Levels::WARNING);
             $order->add_order_note('[Twikey] Link was : '.$orderState );
             $order->set_date_paid(null);
             $order->set_status('failed');
             $order->save();
         }
         else {
-            TwikeyLoader::log("Order# ".$order->get_id()." : ".$orderState);
+            TwikeyLoader::log("Order# ".$order->get_id()." : ".$orderState,WC_Log_Levels::DEBUG);
         }
     }
 
     public function exit_handler(){
-
-        $settings = $this->getSettings();
-        $website_key = $settings['testmode'];
-
-        if(!$website_key){
-            TwikeyLoader::log("No website_key set to validate the exit", WC_Log_Levels::ERROR);
-            exit();
-        }
 
         $mandateNumber = $_GET['mndt'];
         $status = $_GET['status'];
@@ -82,7 +71,8 @@ class TwikeyLinkGateway extends WC_Payment_Gateway
 
         if($order){
             try{
-                Twikey::validateSignature($website_key,$mandateNumber,$status,$token,$signature);
+                $tc = $this->getTwikey();
+                $tc->validateSignature($mandateNumber,$status,$token,$signature);
                 $order->update_status( 'on-hold', 'Awaiting payment confirmation from bank' );
                 // Remove cart.
                 WC()->cart->empty_cart();
@@ -106,13 +96,13 @@ class TwikeyLinkGateway extends WC_Payment_Gateway
     }
 
     public function hook_handler(){
-        if(isset($_GET['type'])){
+        if(isset($_GET['type']) && isset($_GET['ref'])){
             $type = $_GET['type'];
-            $id = $_GET['id'];
             $ref = $_GET['ref'];
-            TwikeyLoader::log("Got callback from Twikey paymentlink=". $id, WC_Log_Levels::DEBUG);
-            if($type === 'payment' && $id){
-                $this->verify_order_action ($ref);
+            TwikeyLoader::log("Got callback from Twikey paymentlink=". $ref, WC_Log_Levels::DEBUG);
+            if($type === 'payment' && $ref){
+                $order    = wc_get_order( $ref );
+                $this->verify_order_action ($order);
             }
             status_header(200, $type);
         }
@@ -141,22 +131,32 @@ class TwikeyLinkGateway extends WC_Payment_Gateway
                 'type'        => 'text',
                 'description' => __( 'Get your API credentials from Twikey.', 'twikey' ),
                 'default'     => '',
+            ),
+            'description' => array(
+                'title'       => __( 'Description', 'twikey' ),
+                'type'        => 'textarea',
+                'description' => __( 'Description for your customers.', 'twikey' ),
+                'default'     => '',
             )
         );
 
         parent::init_settings();
     }
 
-    public function get_icon() {
-        echo '<img src="//www.twikey.com/img/butterfly.svg" alt="Twikey" width="65"/>';
+    public function get_icon(){
+        return "<img src=\"//www.twikey.com/img/butterfly.svg\" alt=\"Twikey\" style=\"height: 1em;display: inline;\">";
+    }
+
+    public function get_description() {
+        return $this->get_option('description');
     }
 
     public function payment_fields() {
         $description = '';
         $description_text = $this->get_option('description');
-        if (!empty($description_text))
+        if (!empty($description_text)){
             $description .= '<p>'.$description_text.'</p>';
-
+        }
         echo $description;
     }
 
@@ -218,42 +218,14 @@ class TwikeyLinkGateway extends WC_Payment_Gateway
         }
     }
 
-    private function getSettings() {
-        return (array)get_option($this->get_option_key());
-    }
-
     private function getTwikey($lang = 'en') {
-        TwikeyLoader::log("New Twikey instance",WC_Log_Levels::INFO);
-        $tc = new TwikeyLinkWoo();
+        $tc = new TwikeyWCWrapper();
         $tc->setTestmode('yes' === $this->get_option( 'testmode', 'no' ));
         $tc->setApiToken($this->get_option( 'apikey' ));
+        //$tc->setTemplateId($this->get_option( 'ct' ));
+        //$tc->setWebsiteKey($this->get_option( 'websitekey' ));
         $tc->setLang($lang);
-
         return $tc;
     }
 }
 
-class TwikeyLinkWoo extends Twikey {
-    /**
-     * @throws TwikeyException
-     */
-    public function checkResponse($curlHandle, $server_output, $context = "No context") {
-        if (!curl_errno($curlHandle)) {
-
-            TwikeyLoader::log(sprintf("%s : Error = %s (%s)", $context, curl_error($curlHandle),$this->endpoint),WC_Log_Levels::ERROR);
-            if ($http_code = curl_getinfo($curlHandle, CURLINFO_HTTP_CODE) >= 400) {
-                TwikeyLoader::log(sprintf("%s : Error = %s (%s)", $context, $server_output,$this->endpoint),WC_Log_Levels::ERROR);
-                throw new TwikeyException($context);
-            }
-        }
-        if (TWIKEY_DEBUG) {
-            TwikeyLoader::log(sprintf("Response %s : %s (%s)", $context, $server_output,$this->endpoint),WC_Log_Levels::INFO);
-        }
-    }
-
-    public function debugRequest($payload){
-        if (TWIKEY_DEBUG) {
-            TwikeyLoader::log(sprintf("Request %s ", $payload), WC_Log_Levels::DEBUG);
-        }
-    }
-}
