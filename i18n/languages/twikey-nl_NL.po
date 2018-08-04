@@ -1,0 +1,76 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.1.1\n"
+"Last-Translator: \n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: nl_NL\n"
+
+msgid "Twikey"
+msgstr ""
+
+msgid "Activate this module to use Twikey"
+msgstr "Activeer deze module om Twikey te gebruiken"
+
+msgid "API key"
+msgstr ""
+
+msgid "Description for your customers."
+msgstr "Omschrijving voor uw klant."
+
+msgid "Enable Twikey"
+msgstr "Twikey activeren"
+
+msgid "Enable Twikey sandbox"
+msgstr "Twikey Beta activeren"
+
+msgid "error_curl_not_installed"
+msgstr "php_curl is niet geinstalleerd <br/> Om Twikey te gebruiken moet CURL geinstalleerd zijn. <br/> Contacteer uw administrator om php_curl te installeren"
+
+msgid "Get your API credentials from Twikey."
+msgstr "Configureer uw API key om Twikey gebruiken."
+
+msgid "Get your Website key from Twikey to allow validating the exiturl."
+msgstr "Configureer uw \"Website key\" om de exiturl te kunnen valideren."
+
+msgid "Pay via card"
+msgstr "Betaal via kaart"
+
+msgid "Pay via Direct debit"
+msgstr "Betalen met Automatisch Incasso"
+
+msgid "Template ID"
+msgstr "Template ID"
+
+msgid "Template ID description"
+msgstr "U kan uw Template ID vinden in settings / templates"
+
+msgid "To use the Twikey plugin it is required that woocommerce is active"
+msgstr "Voor het gebruik van de Twikey plugin is het nodig dat woocommerce actief is"
+
+msgid "Twikey Configuration"
+msgstr "Twikey configuratie"
+
+msgid "Twikey Payment Gateway"
+msgstr "Twikey Betalingsportaal"
+
+msgid "Twikey sandbox"
+msgstr "Twikey sandbox"
+
+msgid "Twikey sandbox description"
+msgstr "Twikey sandbox kan u gebruiken om te testen. <a href='//www.beta.twikey.com'>Aanvragen</a>"
+
+msgid "Verify payment with Twikey"
+msgstr "Betaling verifiëren met Twikey"
+
+msgid "Website key"
+msgstr "Website sleutel"
+
+msgid "Configure Twikey environment"
+msgstr "Configureer uw Twikey omgeving met de volgende waarden:<ul class=\"ul-square\"> <li><a href=\"//www.twikey.com/r/admin#/c/contracttemplate\" target=\"twikey\">Uw Twikey template</a>: gebruik <strong style=\"background-color:#ddd;\">&nbsp;%s&nbsp;</strong> als exit url. Op die manier heeft de klant een bevestiging. </li> <li><a href=\"//www.twikey.com/r/admin#/c/settings/ei\" target=\"twikey\">Twikey API settings</a>: gebruik <strong style=\"background-color:#ddd;\">&nbsp;%s&nbsp;</strong> als webhook om snel betaling updates te krijgen</li></ul>"

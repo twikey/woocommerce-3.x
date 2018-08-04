@@ -26,7 +26,7 @@ function error_woocommerce_not_active() {
 }
 
 function error_curl_not_installed() {
-    echo '<div class="error"><p>' . __('Curl is not installed.<br />In order to use the Twikey plug-in, you must install CURL.<br />Ask your system administrator to install php_curl', 'twikey') . '</p></div>';
+    echo '<div class="error"><p>' . __('error_curl_not_installed', 'twikey') . '</p></div>';
 }
 
 // Curl is niet geinstalleerd. foutmelding weergeven

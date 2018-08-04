@@ -16,8 +16,8 @@ class TwikeyGateway extends WC_Payment_Gateway
     public function __construct() {
         $this->id                   = 'twikey';
         $this->has_fields           = false;
-        $this->method_title         = __('Twikey', 'twikey');
-        $this->title                = __('Twikey', 'twikey');
+        $this->method_title         = 'Twikey';
+        $this->title                = 'Twikey';
         $this->method_description   = __('Activate this module to use Twikey', 'twikey');
         $this->description          = __('Pay via Direct debit', 'twikey');
 
@@ -142,7 +142,7 @@ class TwikeyGateway extends WC_Payment_Gateway
             'enabled' => array(
                 'title'   => __( 'Enable/Disable', 'woocommerce' ),
                 'type'    => 'checkbox',
-                'label'   => __( 'Enable Twikey', 'woocommerce' ),
+                'label'   => __( 'Enable Twikey', 'twikey' ),
                 'default' => 'yes',
             ),
             'testmode' => array(
@@ -150,7 +150,7 @@ class TwikeyGateway extends WC_Payment_Gateway
                 'type'        => 'checkbox',
                 'label'       => __( 'Enable Twikey sandbox', 'twikey' ),
                 'default'     => 'no',
-                'description' => __( 'Twikey sandbox can be used to test. <a href="https://www.beta.twikey.com">Sign up</a>.', 'twikey' ),
+                'description' => __( 'Twikey sandbox description', 'twikey' ),
             ),
             'apikey' => array(
                 'title'       => __( 'API key', 'twikey' ),
@@ -167,11 +167,11 @@ class TwikeyGateway extends WC_Payment_Gateway
             'ct' => array(
                 'title'       => __( 'Template ID', 'twikey' ),
                 'type'        => 'number',
-                'description' => __( 'Twikey Template ID', 'twikey' ),
+                'description' => __( 'Template ID description', 'twikey' ),
                 'default'     => '',
             ),
             'description' => array(
-                'title'       => __( 'Description', 'twikey' ),
+                'title'       => __( 'Description', 'woocommerce' ),
                 'type'        => 'textarea',
                 'description' => __( 'Description for your customers.', 'twikey' ),
                 'default'     => '',
@@ -448,10 +448,8 @@ class TwikeyGateway extends WC_Payment_Gateway
     private function conf_desc(){
         $exiturl = add_query_arg( 'wc-api', 'twikey_exit&mndt={0}&status={1}&s={3}&t={4}', trailingslashit( get_home_url() ) );
         $webhook = add_query_arg( 'wc-api', 'twikey_webhook', trailingslashit( get_home_url() ) );
-        $base = 'Please configure your Twikey environment with the following urls:<ul class="ul-square">' .
-            '<li><a href="https://www.twikey.com/r/admin#/c/contracttemplate" target="_blank">Your Twikey template</a>: use <strong style="background-color:#ddd;">&nbsp;%s&nbsp;</strong> as exit url. This will enable you have a proper checkout.</li>' .
-            '<li><a href="https://www.twikey.com/r/admin#/c/settings/ei" target="_blank">Twikey API settings</a>: use <strong style="background-color:#ddd;">&nbsp;%s&nbsp;</strong> as webhook for timely order updates</li>' .
-            '</ul>';
+
+        $base = __("Configure Twikey environment", "twikey");
         return sprintf( $base, $exiturl, $webhook );
     }
 
