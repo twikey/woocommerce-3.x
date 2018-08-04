@@ -1,35 +1,62 @@
-#, fuzzy
-msgid ""
-msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-12-04 22:14+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: \n"
-"Language: \n"
-"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Loco - https://localise.biz/"
-
-#. Name of the plugin
-#. Author of the plugin
 msgid "Twikey"
 msgstr ""
 
-#. Description of the plugin
-msgid "Twikey Payment Plugin"
+msgid "Activate this module to use Twikey"
 msgstr ""
 
-#. URI of the plugin
-msgid "https://www.twikey.com"
+msgid "API key"
 msgstr ""
 
-#. Author URI of the plugin
-msgid "http://www.twikey.com"
+msgid "Description for your customers."
+msgstr ""
+
+msgid "Enable Twikey"
 msgstr ""
 
 msgid "Enable Twikey sandbox"
+msgstr ""
+
+msgid "error_curl_not_installed"
+msgstr ""
+
+msgid "Get your API credentials from Twikey."
+msgstr ""
+
+msgid "Get your Website key from Twikey to allow validating the exiturl."
+msgstr ""
+
+msgid "Pay via card"
+msgstr ""
+
+msgid "Pay via Direct debit"
+msgstr ""
+
+msgid "Template ID"
+msgstr ""
+
+msgid "To use the Twikey plugin it is required that woocommerce is active"
+msgstr ""
+
+msgid "Twikey Configuration"
+msgstr ""
+
+msgid "Twikey Payment Gateway"
+msgstr ""
+
+msgid "Twikey sandbox"
+msgstr ""
+
+msgid "Twikey sandbox description"
+msgstr "Twikey sandbox can be used to test. <a href='//www.beta.twikey.com'>Sign up</a>."
+
+msgid "Template ID description"
+msgstr "You can find the Template ID in settings / templates"
+
+msgid "Verify payment with Twikey"
+msgstr ""
+
+msgid "Website key"
+msgstr ""
+
+msgid "Configure Twikey environment"
 msgstr ""

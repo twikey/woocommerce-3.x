@@ -1,0 +1,77 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Twikey\n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Language-Team: https://www.twikey.com\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.1.1\n"
+"Last-Translator: \n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: en\n"
+"X-Poedit-KeywordsList: __\n"
+
+msgid "Twikey"
+msgstr ""
+
+msgid "Activate this module to use Twikey"
+msgstr "Activate this module to use Twikey"
+
+msgid "API key"
+msgstr "API key"
+
+msgid "Description for your customers."
+msgstr "Description for your customers."
+
+msgid "Enable Twikey"
+msgstr "Enable Twikey"
+
+msgid "Enable Twikey sandbox"
+msgstr "Enable Twikey sandbox"
+
+msgid "error_curl_not_installed"
+msgstr "php_curl is not installed.<br />In order to use the Twikey plug-in, you must install php_curl.<br />Ask your system administrator to install php_curl"
+
+msgid "Get your API credentials from Twikey."
+msgstr "Configure your API key to connect to Twikey."
+
+msgid "Get your Website key from Twikey to allow validating the exiturl."
+msgstr "Configure your \"Website key\" to allow validating the exiturl."
+
+msgid "Pay via card"
+msgstr "Pay via card"
+
+msgid "Pay via Direct debit"
+msgstr "Pay via Direct debit"
+
+msgid "Template ID"
+msgstr "Template ID"
+
+msgid "To use the Twikey plugin it is required that woocommerce is active"
+msgstr "To use the Twikey plugin it is required that woocommerce is active"
+
+msgid "Twikey Configuration"
+msgstr "Twikey Configuration"
+
+msgid "Twikey Payment Gateway"
+msgstr "Twikey Payment Gateway"
+
+msgid "Twikey sandbox"
+msgstr "Twikey sandbox"
+
+msgid "Twikey sandbox description"
+msgstr "Twikey sandbox description"
+
+msgid "Template ID description"
+msgstr "Template ID description"
+
+msgid "Verify payment with Twikey"
+msgstr "Verify payment with Twikey"
+
+msgid "Website key"
+msgstr "Website key"
+
+msgid "Configure Twikey environment"
+msgstr "Please configure your Twikey environment with the following urls: <ul class=\"ul-square\"> li><a href=\"//www.twikey.com/r/admin#/c/contracttemplate\" target=\"twikey\">Your Twikey template</a>: use <strong style=\"background-color:#ddd;\">&nbsp;%s&nbsp;</strong> as exit url. This will enable you have a proper checkout.</li> <li><a href=\"//www.twikey.com/r/admin#/c/settings/ei\" target=\"twikey\">Twikey API settings</a>: use <strong style=\"background-color:#ddd;\">&nbsp;%s&nbsp;</strong> as webhook for timely order updates</li></ul>"

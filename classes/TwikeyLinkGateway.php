@@ -116,7 +116,7 @@ class TwikeyLinkGateway extends WC_Payment_Gateway
             'enabled' => array(
                 'title'   => __( 'Enable/Disable', 'woocommerce' ),
                 'type'    => 'checkbox',
-                'label'   => __( 'Enable Twikey', 'woocommerce' ),
+                'label'   => __( 'Enable Twikey', 'twikey' ),
                 'default' => 'yes',
             ),
             'testmode' => array(
@@ -124,7 +124,7 @@ class TwikeyLinkGateway extends WC_Payment_Gateway
                 'type'        => 'checkbox',
                 'label'       => __( 'Enable Twikey sandbox', 'twikey' ),
                 'default'     => 'no',
-                'description' => __( 'Twikey sandbox can be used to test. <a href="https://www.beta.twikey.com">Sign up</a>.', 'twikey' ),
+                'description' => __( 'Twikey sandbox description', 'twikey' ),
             ),
             'apikey' => array(
                 'title'       => __( 'API key', 'twikey' ),
@@ -133,7 +133,7 @@ class TwikeyLinkGateway extends WC_Payment_Gateway
                 'default'     => '',
             ),
             'description' => array(
-                'title'       => __( 'Description', 'twikey' ),
+                'title'       => __( 'Description', 'woocommerce' ),
                 'type'        => 'textarea',
                 'description' => __( 'Description for your customers.', 'twikey' ),
                 'default'     => '',
