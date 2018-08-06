@@ -16,7 +16,7 @@ class TwikeyLinkGateway extends WC_Payment_Gateway
         add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
 
         // allow exit url to work
-        add_action( 'woocommerce_api_twikey_exit', array( $this, 'exit_handler' ) );
+        add_action( 'woocommerce_api_twikey_link_exit', array( $this, 'exit_handler' ) );
         add_action( 'woocommerce_api_twikey_webhook', array( $this, 'hook_handler' ) );
 
         // allow verify of payment
@@ -60,26 +60,37 @@ class TwikeyLinkGateway extends WC_Payment_Gateway
 
     public function exit_handler(){
 
-        $mandateNumber = $_GET['mndt'];
-        $status = $_GET['status'];
-        $signature = strtolower($_GET['s']); // signature coming from twikey is hex uppercase
-        $token = $_GET['t'];
-        TwikeyLoader::log("Called webhook ". $mandateNumber, WC_Log_Levels::INFO);
+        $combined = $_GET['o'];
+        if(!$combined){
+            TwikeyLoader::log("Abort no valid order ". $combined, WC_Log_Levels::INFO);
+            status_header( 400 );
+        }
+        $items = explode('-',$combined);
+        if(count($items) != 2){
+            TwikeyLoader::log("Abort no valid order ". $combined, WC_Log_Levels::INFO);
+            status_header( 400 );
+        }
+        $order_id = wc_clean($items[0]);
+        $signature = $items[1]; // signature coming from twikey is hex uppercase
+        TwikeyLoader::log("Called exiturl of paymentlink for ". $order_id, WC_Log_Levels::DEBUG);
 
-        $order_id = wc_clean($mandateNumber);
-        $order    = wc_get_order( $token );
-
+        $order    = wc_get_order( $order_id );
         if($order){
             try{
                 $tc = $this->getTwikey();
-                $tc->validateSignature($mandateNumber,$status,$token,$signature);
+                $amount = round($order->get_total());
+                $calculated = $this->calculateSig($order_id,$amount, $tc->getWebsiteKey());
+                if(!hash_equals($signature,$calculated)){
+                    TwikeyLoader::log("Invalid link signature : expected=".$calculated.' was='.$signature,WC_Log_Levels::ERROR);
+                    throw new TwikeyException('Invalid signature');
+                }
                 $order->update_status( 'on-hold', 'Awaiting payment confirmation from bank' );
                 // Remove cart.
                 WC()->cart->empty_cart();
 
                 // Return thank you page redirect.
                 $return_url = $this->get_return_url($order);
-                TwikeyLoader::log("Success: Return to thank you page ". $return_url, WC_Log_Levels::DEBUG);
+                TwikeyLoader::log("Success for link: Return to thank you page ". $return_url, WC_Log_Levels::DEBUG);
                 wp_safe_redirect($return_url);
             }
             catch (Exception $e){
@@ -167,6 +178,10 @@ class TwikeyLinkGateway extends WC_Payment_Gateway
         return in_array($client_lang, $langs) ? $client_lang : $default_lang;
     }
 
+    private function calculateSig($order_id,$amount,$websiteKey){
+        return hash_hmac('sha256', sprintf("%d/%d",$order_id,$amount), $websiteKey);
+    }
+
     public function process_payment($order_id){
 
         global $woocommerce;
@@ -179,7 +194,12 @@ class TwikeyLinkGateway extends WC_Payment_Gateway
         $ref = $order->get_order_number();
         $amount = round($order->get_total());
 
-        $exiturl = add_query_arg( 'wc-api', 'twikey_link_exit', trailingslashit( get_home_url() ) );
+        $sig = $this->calculateSig($order_id,$amount, $tc->getWebsiteKey());
+        $exiturl = add_query_arg(
+            array(
+                'wc-api' => 'twikey_link_exit',
+                'o' => $order_id.'-'.urlencode($sig)
+            ),get_home_url() );
 
         $linkData = [
             "name" => $order->get_billing_first_name() . " " . $order->get_billing_last_name(),
@@ -228,4 +248,3 @@ class TwikeyLinkGateway extends WC_Payment_Gateway
         return $tc;
     }
 }
-
