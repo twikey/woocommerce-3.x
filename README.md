@@ -1,4 +1,1 @@
-# woocommerce-3.5
-Woocommerce-3.5
-
-#
+Twikey plugin for Woocommerce-3.5

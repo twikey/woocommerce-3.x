@@ -7,7 +7,7 @@
   Author URI:http://www.twikey.com
   Version: 2.1
 
-  Copyright: 2017 Twikey(email : support@twikey.com)
+  Copyright: 2018 Twikey(email : support@twikey.com)
   License: GNU General Public License v3.0
   License URI: http://www.gnu.org/licenses/gpl-3.0.html
 */
@@ -51,10 +51,10 @@ register_activation_hook(__FILE__, 'register');
 register_deactivation_hook( __FILE__, 'deregister' );
 
 function register(){
-    TwikeyLoader::log("Scheduling tasks");
+    TwikeyLoader::log("Scheduling tasks",WC_Log_Levels::NOTICE);
     if ( ! wp_next_scheduled( 'twikey_scheduled_verifyPayments' ) ){
         wp_schedule_event(time(),'twicedaily','twikey_scheduled_verifyPayments');
-        TwikeyLoader::log("Registered Twikey scheduled tasks");
+        TwikeyLoader::log("Registered Twikey scheduled tasks",WC_Log_Levels::NOTICE);
     }
     // ensure deactivation can be called
     register_deactivation_hook( __FILE__, array( __CLASS__, 'unschedule_twikey' ) );
@@ -62,7 +62,7 @@ function register(){
 
 function deregister(){
     wp_clear_scheduled_hook('twikey_scheduled_verifyPayments');
-    TwikeyLoader::log("Unregistering Twikey scheduled tasks");
+    TwikeyLoader::log("Unregistering Twikey scheduled tasks",WC_Log_Levels::NOTICE);
 }
 
 add_action('twikey_scheduled_verifyPayments', 'twikey_scheduled_verifyPayments');
