@@ -72,5 +72,11 @@ msgstr "Betaling verifiëren met Twikey"
 msgid "Website key"
 msgstr "Website sleutel"
 
+msgid "Payment received via Twikey on "
+msgstr "Betaling ontvangen via Twikey op "
+
+msgid "Message from the bank: "
+msgstr "[Twikey] Bericht van de bank: "
+
 msgid "Configure Twikey environment"
 msgstr "Configureer uw Twikey omgeving met de volgende waarden:<ul class=\"ul-square\"> <li><a href=\"//www.twikey.com/r/admin#/c/contracttemplate\" target=\"twikey\">Uw Twikey template</a>: gebruik <strong style=\"background-color:#ddd;\">&nbsp;%s&nbsp;</strong> als exit url. Op die manier heeft de klant een bevestiging. </li> <li><a href=\"//www.twikey.com/r/admin#/c/settings/ei\" target=\"twikey\">Twikey API settings</a>: gebruik <strong style=\"background-color:#ddd;\">&nbsp;%s&nbsp;</strong> als webhook om snel betaling updates te krijgen</li></ul>"

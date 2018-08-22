@@ -43,7 +43,7 @@ class TwikeyLinkGateway extends WC_Payment_Gateway
         $orderState = $entry->state;
         if($orderState == 'paid'){
             TwikeyLoader::log("Set payment date of order #".$entry->bkdate,WC_Log_Levels::INFO);
-            $order->add_order_note('Payment received via Twikey on '.$entry->bkdate);
+            $order->add_order_note('Payment received via Twikey');
             $order->payment_complete($entry->id);
         }
         else if($orderState == 'declined' || $orderState == 'expired'){
@@ -79,7 +79,7 @@ class TwikeyLinkGateway extends WC_Payment_Gateway
             try{
                 $tc = $this->getTwikey();
                 $amount = round($order->get_total());
-                $calculated = $this->calculateSig($order_id,$amount, $tc->getWebsiteKey());
+                $calculated = $this->calculateSig($order_id,$amount, $tc->getApiToken());
                 if(!hash_equals($signature,$calculated)){
                     TwikeyLoader::log("Invalid link signature : expected=".$calculated.' was='.$signature,WC_Log_Levels::ERROR);
                     throw new TwikeyException('Invalid signature');
@@ -194,7 +194,7 @@ class TwikeyLinkGateway extends WC_Payment_Gateway
         $ref = $order->get_order_number();
         $amount = round($order->get_total());
 
-        $sig = $this->calculateSig($order_id,$amount, $tc->getWebsiteKey());
+        $sig = $this->calculateSig($order_id,$amount, $tc->getApiToken());
         $exiturl = add_query_arg(
             array(
                 'wc-api' => 'twikey_link_exit',

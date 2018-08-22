@@ -25,6 +25,10 @@ class Twikey {
         }
     }
 
+    public function getApiToken(){
+        return $this->apiToken;
+    }
+
     public function setApiToken($apiToken){
         $this->apiToken = trim($apiToken);
     }
@@ -100,7 +104,7 @@ class Twikey {
         curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $this->setCurlDefaults($ch);
-        
+
         $server_output = curl_exec($ch);
         $this->checkResponse($ch, $server_output, "Creating a new mandate!");
         curl_close($ch);
@@ -202,7 +206,7 @@ class Twikey {
 
     /**
      * @param $linkid
-     * @param $ref 
+     * @param $ref
      * @return array|mixed|object
      * @throws TwikeyException
      */
@@ -223,7 +227,7 @@ class Twikey {
         curl_setopt($ch, CURLOPT_HTTPHEADER, array("Authorization: $this->auth","Accept-Language: $this->lang"));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $this->setCurlDefaults($ch);
-        
+
         $server_output = curl_exec($ch);
         $this->checkResponse($ch, $server_output, "Verifying a paymentlink ".$payload);
         curl_close($ch);
@@ -281,7 +285,7 @@ class Twikey {
         curl_setopt($ch, CURLOPT_HTTPHEADER, array("Authorization: $this->auth"/*, "X-RESET: true"*/,"Accept-Language: $this->lang"));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $this->setCurlDefaults($ch);
-        
+
         $server_output = curl_exec($ch);
         $this->checkResponse($ch, $server_output, "Retrieving payments!");
         curl_close($ch);
@@ -300,7 +304,7 @@ class Twikey {
         curl_setopt($ch, CURLOPT_HTTPHEADER, array("Authorization: $this->auth"/*, "X-RESET: true"*/,"Accept-Language: $this->lang"));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $this->setCurlDefaults($ch);
-        
+
         $server_output = curl_exec($ch);
         $this->checkResponse($ch, $server_output, "Retrieving transaction feed!");
         curl_close($ch);
@@ -370,7 +374,7 @@ class Twikey {
     }
 
     /**
-     * Allows 
+     * Allows
      * @param $msg
      */
     public function debugRequest($msg){
