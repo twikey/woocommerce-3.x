@@ -1,13 +1,116 @@
-<!doctype html>
-<html class="default no-js">
+<!DOCTYPE html>
+<html lang="en-US">
 <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Twikey for Woocommerce 3.0</title>
-    <meta name="description" content="">
+    <meta charset="UTF-8">
+    <title>Twikey WooCommerce plugin</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheet.css">
 </head>
 <body>
+
+<section class="page-header">
+    <h1 class="project-name">Twikey WooCommerce plugin</h1>
+    <h2 id="accept-payments-via-twikey">Accept payments via
+        <a style="color: inherit" href="//www.twikey.com">Twikey</a>
+        <img src="//www.twikey.com/img/butterfly.svg" style="height: 30px">
+    </h2>
+
+    <a href="http://github.com/twikey/woocommerce-3.x" class="btn">View on GitHub</a>
+    <a href="https://github.com/twikey/woocommerce-3.x/zipball/master" class="btn">Download</a>
+
+    <a href="https://github.com/twikey/woocommerce-3.x/releases/latest" class="btn">Releases</a>
+</section>
+
+<section class="main-content">
+
+    <p>Want to allow your customers to pay in the most convenient way, then Twikey is right what you need.</p>
+
+    <blockquote>
+        <p>Recurring or occasional payments via SEPA electronic Direct Debit mandates, for WooCommerce</p>
+    </blockquote>
+
+    <p>
+        Twikey offers a simple and safe multichannel solution to negotiate and collect recurring (or even occasional) payments.
+        Twikey has integrations with most accounting and CRM packages. It is the first and only provider to operate on a European level
+        for Direct Debit and can work directly with all major Belgian and Dutch Banks. However you can use the payment options of your
+        favorite PSP to allow other customers to pay as well.
+    </p>
+
+    <h2 id="features">Features</h2>
+
+    <p>The Twikey WooCommerce plugin can be used in combination with the WooCommerce subscription plugin as well as in standalone mode to handle subscriptions right from within Twikey.</p>
+
+    <h2 id="installation--configuration">Installation &amp; Configuration</h2>
+
+    <h3 id="step-1">Step 1 : <a style="color: inherit;text-decoration: underline" href="https://github.com/twikey/woocommerce-3.x/zipball/master">Download the plugin</a></h3>
+
+    <h3 id="step-2--install-the-plugin">Step 2 : Install the plugin</h3>
+
+    <p>Within your WordPress environment, choose “Plugins &gt; Add New &gt; Upload Plugin”
+        and upload the zip. Activate the plugin.</p>
+
+    <p><img src="images/UploadPlugin.png" alt="Image of UploadPlugin" /></p>
+
+    <h2 id="step-3--activate-the-plugin">Step 3 : Activate the plugin</h2>
+
+    <p>Configure the plugin in “WooCommerce &gt; Settings &gt; Payments”.
+        Activate both Twikey methods and click on “Manage".</p>
+
+    <p><img src="images/ActivateMethods.png" alt="Image of ActivatedMethods" /></p>
+
+    <h2 id="step-4-plugin-configuration">Step 4: Plugin configuration</h2>
+
+    <ol>
+        <li>Enable Twikey Sandbox for testing via Twikey Beta</li>
+        <li>Fill in the API key  (see step 5)</li>
+        <li>Fill in the Website key  (see step 6)</li>
+        <li>Fill in the Template ID  (see step 7)</li>
+        <li>Fill in the Description for your customers</li>
+    </ol>
+
+    <p><img src="images/TwikeyMethodManaging.png" alt="Image of TwikeyMethodManaging" /></p>
+
+    <h2 id="step-5-api-key-twikey">Step 5: Api key [Twikey]</h2>
+
+    <p>The API key allow you to talk to our API.</p>
+
+    <ol>
+        <li>Via <a href="https://www.twikey.com/r/admin#/c/settings/ei">Settings &gt; API</a></li>
+        <li>Choose “Own integration"</li>
+        <li>API token = API key for plugin</li>
+        <li>For timely order updates use <b>{your url}/?wc-api=twikey_webhook</b></li>
+    </ol>
+
+    <p><img src="images/APIKeyModified.png" alt="Image of APIKey" /></p>
+
+    <h2 id="step-6-website-key-twikey">Step 6: Website key [Twikey]</h2>
+
+    <p>The website key allows the plugin to verify that incoming requests are coming from us.</p>
+
+    <ol>
+        <li>Via <a href="https://www.twikey.com/r/admin#/c/settings/ip">Settings &gt; Website</a></li>
+        <li>Private key = website key for Plugin</li>
+    </ol>
+
+    <p><img src="images/WebsiteKey.png" alt="Image of WebsiteKey" /></p>
+
+    <h2 id="step-7-choose-your-template">Step 7: Choose your template</h2>
+
+    <ol>
+        <li>Via <a href="https://www.twikey.com/r/admin#/c/contracttemplate">Settings &gt; templates</a></li>
+        <li>Choose the template number you want to connect to your WooCommerce store.</li>
+        <li>For proper checkout, use your Twikey template: <b>{your url}/wc-api=twikey_exit&mndt={0}&status={1}&s={3}&t={4}</b> as exit url.</li>
+    </ol>
+
+    <p><img src="images/TemplateKeyModified.png" alt="Image of TemplateKey" /></p>
+
+    <h2 id="step-8">Step 8</h2>
+
+    <p>Repeat steps 4 to 7 for the Payment Gateway plugin.</p>
+
+
+</section>
+
 
 </body>
 </html>
