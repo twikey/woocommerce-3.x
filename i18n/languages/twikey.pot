@@ -2,61 +2,67 @@ msgid "Twikey"
 msgstr ""
 
 msgid "Activate this module to use Twikey"
-msgstr ""
+msgstr "Activate this module to use Twikey"
 
 msgid "API key"
-msgstr ""
+msgstr "API key"
 
 msgid "Description for your customers."
-msgstr ""
+msgstr "Description for your customers."
 
 msgid "Enable Twikey"
-msgstr ""
+msgstr "Enable Twikey"
 
 msgid "Enable Twikey sandbox"
-msgstr ""
+msgstr "Enable Twikey sandbox"
 
 msgid "error_curl_not_installed"
-msgstr ""
+msgstr "php_curl is not installed.<br />In order to use the Twikey plug-in, you must install php_curl.<br />Ask your system administrator to install php_curl"
 
 msgid "Get your API credentials from Twikey."
-msgstr ""
+msgstr "Configure your API key to connect to Twikey."
 
 msgid "Get your Website key from Twikey to allow validating the exiturl."
-msgstr ""
+msgstr "Configure your \"Website key\" to allow validating the exiturl."
 
 msgid "Pay via card"
-msgstr ""
+msgstr "Pay via card"
 
 msgid "Pay via Direct debit"
-msgstr ""
+msgstr "Pay via Direct debit"
 
 msgid "Template ID"
-msgstr ""
+msgstr "Template ID"
 
 msgid "To use the Twikey plugin it is required that woocommerce is active"
-msgstr ""
+msgstr "To use the Twikey plugin it is required that woocommerce is active"
 
 msgid "Twikey Configuration"
-msgstr ""
+msgstr "Twikey Configuration"
 
 msgid "Twikey Payment Gateway"
-msgstr ""
+msgstr "Twikey Payment Gateway"
 
 msgid "Twikey sandbox"
-msgstr ""
+msgstr "Twikey sandbox"
 
 msgid "Twikey sandbox description"
-msgstr "Twikey sandbox can be used to test. <a href='//www.beta.twikey.com'>Sign up</a>."
+msgstr "Twikey sandbox description"
 
 msgid "Template ID description"
-msgstr "You can find the Template ID in settings / templates"
+msgstr "Template ID description"
 
 msgid "Verify payment with Twikey"
-msgstr ""
+msgstr "Verify payment with Twikey"
 
 msgid "Website key"
-msgstr ""
+msgstr "Website key"
+
+msgid "Payment received via Twikey on "
+msgstr "Payment received via Twikey on "
+
+msgid "Message from the bank: "
+msgstr "[Twikey] Message from the bank: "
 
 msgid "Configure Twikey environment"
-msgstr ""
+msgstr "Please configure your Twikey environment with the following urls: <ul class=\"ul-square\"> li><a href=\"//www.twikey.com/r/admin#/c/contracttemplate\" target=\"twikey\">Your Twikey template</a>: use <strong style=\"background-color:#ddd;\">&nbsp;%s&nbsp;</strong> as exit url. This will enable you have a proper checkout.</li> <li><a href=\"//www.twikey.com/r/admin#/c/settings/ei\" target=\"twikey\">Twikey API settings</a>: use <strong style=\"background-color:#ddd;\">&nbsp;%s&nbsp;</strong> as webhook for timely order updates</li></ul>"

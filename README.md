@@ -1,1 +1,66 @@
-Twikey plugin for Woocommerce-3.5
+<a href="https://www.twikey.com"><img src="https://www.twikey.com/img/logo.svg" width="110"></a>
+  
+Want to allow your customers to pay in the most convenient way, then Twikey is right what you need.
+
+<blockquote>
+    <p>Recurring or occasional payments via SEPA electronic Direct Debit mandates, for WooCommerce</p>
+</blockquote>
+
+Twikey offers a simple and safe multichannel solution to negotiate and collect recurring (or even occasional) payments.
+Twikey has integrations with most accounting and CRM packages. It is the first and only provider to operate on a European level
+for Direct Debit and can work directly with all major Belgian and Dutch Banks. However you can use the payment options of your
+favorite PSP to allow other customers to pay as well.
+
+### FEATURES
+
+* Compatible with WooCommerce subscriptions for recurring (and occasional) transactions
+* Launch other payment types with affiliated PSP’s
+* Omni-channel possibilities besides webshop: email, Sms, WhatsApp, face-2-face, phone, call center, in App negotiating direct debits
+* Advanced dunning system for payment follow-up
+* Advanced view on all types of payments
+* Multiple languages available for end-customers: English, Dutch, French, German, Italian, Spanish, and Portuguese
+* Reconciliation output covering all payments for accounting packages
+* Redirect URLs
+
+  
+### For the validations of Sepa Direct Debit mandates
+
+Core: All 3500 European banks
+B2B: ABN-Amro, Bank J. Van Breda, Belfius, BNP Paribas Fortis, Crelan, ING (Belgium and the Netherlands), KBC, Rabobank
+
+### For the execution of transactions : Affiliated banks and PSP's
+
+Affiliated banks:
+
+* ABN-Amro (international)
+* Belfius 
+* BNP Paribas Fortis (Belgium & Netherlands)
+* BNP Paribas (international)
+* KBC
+* ING (international)
+* Non-automated flows: all European banks
+
+Affiliated PSP's:
+* MultiSafePay
+* Mollie
+* EMS
+* Stripe
+* PayPal
+* Adyen
+* Ingenico
+
+### Supporting transactions
+
+Recurring transactions:
+* Sepa Direct Debit (Europe)
+
+Backup payments:
+* iDEAL (the Netherlands)
+* Bancontact (Belgium)
+* Tikkie (the Netherlands)
+* Credit transfers
+
+Please go to the Twikey [signup page](https://www.twikey.com) to start with Twikey. 
+Contact info@twikey.com if you have questions or comments about this plugin.
+
+> We offer you the "payment building blocks" for constructing your own cheap payment gateway.
