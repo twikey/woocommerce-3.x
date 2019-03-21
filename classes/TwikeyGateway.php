@@ -346,7 +346,7 @@ class TwikeyGateway extends WC_Payment_Gateway
             "mndtId"                 => $mndtId,
             "message"                => $msg,
             "ref"                    => $new_order->get_id(),
-            "amount"                 => round($amount_to_charge),
+            "amount"                 => round($amount_to_charge,2),
             "place"                  => 'Renewal'
         );
 
