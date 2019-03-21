@@ -29,38 +29,28 @@ class TwikeyLoader {
 
     public static function filter_gateways( $gateways ) {
         global $theorder;
-        /* add your user role in condition and payment method which you need to unset
-        $current_user = wp_get_current_user();
-        $role = $current_user->roles;
-        if ($role[0] == 'administrator') {
-            unset($gateways['cod']);
-        }*/
-
         if ( is_cart() ||  is_checkout()  ) {
 
             $isCard = false;
-            // Loop through all products in the Cart
-//            foreach (WC()->cart->get_cart() as $cart_item_key => $cart_item) {
-//                $productId = $cart_item['product_id'];
-//                $term_list = wp_get_post_terms($productId, 'product_cat');
-////                SELF::log("$term_list = ".print_r($term_list,true),WC_Log_Levels::NOTICE);
-//                $cat = $term_list[0] -> slug;
-//                if ($cat === 'hoodies') {
-//                    $isCard = true;
-////                    SELF::log("CARD = $cat -> ".print_r($isCard,true));
-//                    break;
-//                }
-//            }
-
-            if ($isCard) {
-                if (isset($gateways['twikey-gateway'])) {
-                    unset($gateways['twikey-gateway']);
+            $selected_gateway = apply_filters( 'twikey_gateway_selection', WC()->cart->get_cart() );
+            // Reverse logic, if you chose one, you need to unset the other one
+	        if ( empty( $selected_gateway ) ){
+                # unset the paylink gateway so the DD is chosen by default
+                if (isset($gateways['twikey-paylink'])) {
+                    unset($gateways['twikey-paylink']);
                 }
-            } else {
-                if (isset($gateways['twikey'])) {
-                    unset($gateways['twikey']);
+	        }
+	        else {
+                if ($selected_gateway == 'twikey') {
+                    if (isset($gateways['twikey-paylink'])) {
+                        unset($gateways['twikey-paylink']);
+                    }
+                } else {
+                    if (isset($gateways['twikey'])) {
+                        unset($gateways['twikey']);
+                    }
                 }
-            }
+	        }
         }
         return $gateways;
     }
