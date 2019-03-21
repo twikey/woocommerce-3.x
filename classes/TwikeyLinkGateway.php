@@ -78,7 +78,7 @@ class TwikeyLinkGateway extends WC_Payment_Gateway
         if($order){
             try{
                 $tc = $this->getTwikey();
-                $amount = round($order->get_total());
+                $amount = round($order->get_total(),2);
                 $calculated = $this->calculateSig($order_id,$amount, $tc->getApiToken());
                 if(!hash_equals($signature,$calculated)){
                     TwikeyLoader::log("Invalid link signature : expected=".$calculated.' was='.$signature,WC_Log_Levels::ERROR);
