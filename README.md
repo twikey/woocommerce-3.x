@@ -64,3 +64,28 @@ Please go to the Twikey [signup page](https://www.twikey.com) to start with Twik
 Contact info@twikey.com if you have questions or comments about this plugin.
 
 > We offer you the "payment building blocks" for constructing your own cheap payment gateway.
+
+### Gateway selection
+
+You can decide which gateway to use (based on the items in the cart) by adding the filter 'twikey_gateway_selection'
+The outcome should either be 'twikey' for Direct debit or 'twikey-paylink' in case you want to use a payment link.
+eg.
+
+```$php
+    // For hoodies we use direct debit as they are returning customers :)
+    public function selectGatewayBasedOnCart($cart){
+        // Loop through all products in the Cart
+        foreach ($cart as $cart_item_key => $cart_item) {
+            $productId = $cart_item['product_id'];
+            $term_list = wp_get_post_terms($productId, 'product_cat');
+            // SELF::log("$term_list = ".print_r($term_list,true),WC_Log_Levels::NOTICE);
+            $cat = $term_list[0] -> slug;
+            if ($cat === 'hoodies') {
+                // SELF::log("CARD = $cat -> ".print_r($isCard,true));
+                return 'twikey';
+            }
+        }
+        return 'twikey-paylink';
+    }
+    add_filter('twikey_gateway_selection', array( $this, 'selectGatewayBasedOnCart' );
+```

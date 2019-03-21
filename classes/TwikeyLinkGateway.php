@@ -3,7 +3,7 @@
 class TwikeyLinkGateway extends WC_Payment_Gateway
 {
     public function __construct() {
-        $this->id                   = 'twikey-gateway';
+        $this->id                   = 'twikey-paylink';
         $this->has_fields           = false;
         $this->method_title         = __('Twikey Payment Gateway', 'twikey');
         $this->title                = __('Twikey Payment Gateway', 'twikey');
