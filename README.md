@@ -87,5 +87,21 @@ eg.
         }
         return 'twikey-paylink';
     }
-    add_filter('twikey_gateway_selection', array( $this, 'selectGatewayBasedOnCart' );
+    add_filter('twikey_gateway_selection', array( $this, 'selectGatewayBasedOnCart') );
+```
+
+### Template selection
+
+You can decide which template to use (based on the items in the order) by adding the filter 'twikey_template_selection'
+The outcome should be a template id.
+eg.
+
+```$php
+    // For hoodies we use direct debit as they are returning customers :)
+    public function selectCtBasedOnOrder($order){
+        if($order->get_billing_country() === 'BE')
+            return 123;
+        return 321;
+    }
+    add_filter('twikey_template_selection', array( $this, 'selectCtBasedOnOrder') );
 ```
