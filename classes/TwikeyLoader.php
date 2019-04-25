@@ -12,6 +12,8 @@ class TwikeyLoader {
         add_filter('woocommerce_payment_gateways'  , array(__CLASS__, 'addTwikeyGateways'));
         add_filter('woocommerce_order_actions', array( __CLASS__, 'add_verify_order_action' ));
         add_filter('woocommerce_available_payment_gateways', array( __CLASS__, 'filter_gateways' ), 1);
+        //add_filter('twikey_gateway_selection', array( __CLASS__, 'selectGatewayBasedOnCart') );
+        //add_filter('twikey_template_selection', array( __CLASS__, 'selectCtBasedOnOrder') );
     }
 
     public static function addTwikeyGateways($methods){
@@ -31,7 +33,6 @@ class TwikeyLoader {
         global $theorder;
         if ( is_cart() ||  is_checkout()  ) {
 
-            $isCard = false;
             $selected_gateway = apply_filters( 'twikey_gateway_selection', WC()->cart->get_cart() );
             // Reverse logic, if you chose one, you need to unset the other one
 	        if ( empty( $selected_gateway ) ){
@@ -72,5 +73,24 @@ class TwikeyLoader {
             $level = WC_Log_Levels::NOTICE;
         self::$log->log($level, $message ,array ( 'source' => 'Twikey-Http' ));
     }
+
+//    public static function selectGatewayBasedOnCart($cart){
+//        foreach ($cart as $cart_item_key => $cart_item) {
+//            $productId = $cart_item['product_id'];
+//            $term_list = wp_get_post_terms($productId, 'product_cat');
+//            $cat = $term_list[0] -> slug;
+//            if ($cat === 'hoodies') {
+//                return 'twikey';
+//            }
+//        }
+//        return 'twikey-paylink';
+//    }
+//
+//    public static function selectCtBasedOnOrder($order){
+//        if($order->get_billing_country() === 'BE')
+//            return 123;
+//        return 321;
+//    }
+
 }
 

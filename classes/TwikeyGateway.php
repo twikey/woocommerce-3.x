@@ -246,8 +246,13 @@ class TwikeyGateway extends WC_Payment_Gateway
         $ref = $order->get_order_number();
         $amount = round($order->get_total());
 
+        $ct = apply_filters( 'twikey_template_selection', $order );
+        if( empty($ct) ){
+            $ct = $tc->getTemplateId();
+        }
+
         $my_order = array(
-            "ct"                    => $tc->getTemplateId(),
+            "ct"                    => $ct,
             "check"                 => true,
             "order_id"              => $ref,
             "token"                  => $ref,
