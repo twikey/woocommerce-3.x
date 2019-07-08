@@ -12,8 +12,9 @@ class TwikeyLoader {
         add_filter('woocommerce_payment_gateways'  , array(__CLASS__, 'addTwikeyGateways'));
         add_filter('woocommerce_order_actions', array( __CLASS__, 'add_verify_order_action' ));
         add_filter('woocommerce_available_payment_gateways', array( __CLASS__, 'filter_gateways' ), 1);
-        //add_filter('twikey_gateway_selection', array( __CLASS__, 'selectGatewayBasedOnCart') );
-        //add_filter('twikey_template_selection', array( __CLASS__, 'selectCtBasedOnOrder') );
+
+
+        add_filter('twikey_gateway_selection', array( __CLASS__, 'selectGatewayBasedOnCart' ), 1);
     }
 
     public static function addTwikeyGateways($methods){
@@ -30,7 +31,6 @@ class TwikeyLoader {
     }
 
     public static function filter_gateways( $gateways ) {
-        global $theorder;
         if ( is_cart() ||  is_checkout()  ) {
 
             $selected_gateway = apply_filters( 'twikey_gateway_selection', WC()->cart->get_cart() );
@@ -58,39 +58,23 @@ class TwikeyLoader {
 
     public static function log( $message , $level )  {
         if ( empty( self::$log ) ) {
-            self::$log = wc_get_logger();
+            self::$log = new WC_Logger();
         }
         if(!$level)
             $level = WC_Log_Levels::NOTICE;
-        self::$log->log($level, $message,array ( 'source' => 'Twikey' ) );
+        self::$log->add('twikey', $level . ' ' . $message);
     }
 
     public static function logHttp( $message , $level )  {
         if ( empty( self::$log ) ) {
-            self::$log = wc_get_logger();
+            self::$log = new WC_Logger();
         }
         if(!$level)
             $level = WC_Log_Levels::NOTICE;
-        self::$log->log($level, $message ,array ( 'source' => 'Twikey-Http' ));
+        self::$log->add('twikey', 'HTTP: ' . $level . ' ' . $message);
     }
 
-//    public static function selectGatewayBasedOnCart($cart){
-//        foreach ($cart as $cart_item_key => $cart_item) {
-//            $productId = $cart_item['product_id'];
-//            $term_list = wp_get_post_terms($productId, 'product_cat');
-//            $cat = $term_list[0] -> slug;
-//            if ($cat === 'hoodies') {
-//                return 'twikey';
-//            }
-//        }
-//        return 'twikey-paylink';
-//    }
-//
-//    public static function selectCtBasedOnOrder($order){
-//        if($order->get_billing_country() === 'BE')
-//            return 123;
-//        return 321;
-//    }
-
+    public static function selectGatewayBasedOnCart($cart){
+        return 'twikey';
+    }
 }
-

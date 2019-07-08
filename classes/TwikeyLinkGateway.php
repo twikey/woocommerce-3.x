@@ -2,6 +2,7 @@
 
 class TwikeyLinkGateway extends WC_Payment_Gateway
 {
+
     public function __construct() {
         $this->id                   = 'twikey-paylink';
         $this->has_fields           = false;
@@ -28,7 +29,7 @@ class TwikeyLinkGateway extends WC_Payment_Gateway
     public function verify_order_action(WC_Order $order ) {
         try{
             $tc  = $this->getTwikey();
-            $status = $tc->verifyLink(null,$order->get_id());
+            $status = $tc->verifyLink(null,$order->id);
 
             $entry = $status->Links[0];
             $this->updateOrder($order, $entry);
@@ -47,14 +48,12 @@ class TwikeyLinkGateway extends WC_Payment_Gateway
             $order->payment_complete($entry->id);
         }
         else if($orderState == 'declined' || $orderState == 'expired'){
-            TwikeyLoader::log("Order was in error : ".$order->get_id(),WC_Log_Levels::WARNING);
+            TwikeyLoader::log("Order was in error : ".$order->id,WC_Log_Levels::WARNING);
             $order->add_order_note('[Twikey] Link was : '.$orderState );
-            $order->set_date_paid(null);
-            $order->set_status('failed');
-            $order->save();
+            $order->$order->update_status( 'on-hold', 'failed' );
         }
         else {
-            TwikeyLoader::log("Order# ".$order->get_id()." : ".$orderState,WC_Log_Levels::DEBUG);
+            TwikeyLoader::log("Order# ".$order->id." : ".$orderState,WC_Log_Levels::DEBUG);
         }
     }
 
@@ -201,8 +200,15 @@ class TwikeyLinkGateway extends WC_Payment_Gateway
                 'o' => $order_id.'-'.urlencode($sig)
             ),get_home_url() );
 
+        $ip = $_SERVER["REMOTE_ADDR"];
+        if ( isset($_SERVER['HTTP_X_FORWARDED_FOR']) ) {
+            $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+        }
+
         $linkData = [
-            "name" => $order->get_billing_first_name() . " " . $order->get_billing_last_name(),
+            'firstname' => $order->billing_first_name,
+            'lastname'  => $order->billing_last_name,
+            "place" => $ip,
             "amount" => $amount,
             "message" => $description,
             "ref" => $ref,
@@ -212,12 +218,10 @@ class TwikeyLinkGateway extends WC_Payment_Gateway
             $paymentlink = $tc->newLink($linkData);
             if($paymentlink->url){
                 $order->update_status( 'on-hold', 'Awaiting payment confirmation from bank' );
-
-                $order->set_transaction_id($paymentlink->id);
-                $order->save();
+                $order->add_payment_token($paymentlink->id);
 
                 // Reduce stock levels
-                wc_reduce_stock_levels($order_id);
+                $order->reduce_order_stock();
 
                 // Remove cart
                 $woocommerce->cart->empty_cart();

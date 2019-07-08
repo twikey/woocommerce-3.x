@@ -55,7 +55,7 @@ class TwikeyGateway extends WC_Payment_Gateway
     public function verify_order_action(WC_Order $order ) {
         try{
             $tc  = $this->getTwikey();
-            $status = $tc->getPaymentStatus(null,$order->get_id());
+            $status = $tc->getPaymentStatus(null,$order->id);
 
             $entry = $status->Entries[0];
             $this->updateOrder($order, $entry);
@@ -71,18 +71,15 @@ class TwikeyGateway extends WC_Payment_Gateway
         if($orderState == 'PAID'){
             TwikeyLoader::log("Set payment date of order #".$entry->bkdate,WC_Log_Levels::INFO);
             $order->add_order_note('Payment received via Twikey on '.$entry->bkdate);
-            $order->set_date_paid($entry->bkdate);
             $order->payment_complete($entry->id);
         }
         else if($orderState == 'ERROR'){
-            TwikeyLoader::log("Order was in error : ".$order->get_id(),WC_Log_Levels::WARNING);
+            TwikeyLoader::log("Order was in error : ".$order->id,WC_Log_Levels::WARNING);
             $order->add_order_note('[Twikey] Message from the bank: '.$entry->bkmsg );
-            $order->set_date_paid(null);
-            $order->set_status('failed');
-            $order->save();
+            $order->$order->update_status( 'on-hold', 'failed' );
         }
         else {
-            TwikeyLoader::log("Order was pending : ".$order->get_id(),WC_Log_Levels::DEBUG);
+            TwikeyLoader::log("Order was pending : ".$order->id,WC_Log_Levels::DEBUG);
         }
     }
 
@@ -121,7 +118,7 @@ class TwikeyGateway extends WC_Payment_Gateway
             status_header( 400 );
         }
         exit;
-    }
+	}
 
     public function hook_handler(){
         if(isset($_GET['type']) && !isset($_GET['id'])){
@@ -200,7 +197,7 @@ class TwikeyGateway extends WC_Payment_Gateway
         $description_text = $this->get_option('description');
         if (!empty($description_text)){
             $description .= '<p>'.$description_text.'</p>';
-        }
+    }
         echo $description;
     }
 
@@ -211,13 +208,13 @@ class TwikeyGateway extends WC_Payment_Gateway
         TwikeyLoader::log("Checking payments",WC_Log_Levels::INFO);
         try{
             $tc   = $this->getTwikey();
-            $feed = $tc->getTransactionFeed();
-            foreach ( $feed->Entries as $entry ){
-                $order = wc_get_order( $entry->ref );
-                if($order){
+        $feed = $tc->getTransactionFeed();
+        foreach ( $feed->Entries as $entry ){
+            $order = wc_get_order( $entry->ref );
+            if($order){
                     $this->updateOrder($order, $entry);
-                }
-                else {
+            }
+            else {
                     TwikeyLoader::log("No order found for #".$entry->ref,WC_Log_Levels::WARNING);
                 }
             }
@@ -241,15 +238,12 @@ class TwikeyGateway extends WC_Payment_Gateway
         $lang = $this->getUserLang();
 
         $tc = $this->getTwikey($lang);
-
         $description = "Order ".$order->get_order_number();
         $ref = $order->get_order_number();
         $amount = round($order->get_total());
 
-        $ct = apply_filters( 'twikey_template_selection', $order );
-        if( empty($ct) ){
-            $ct = $tc->getTemplateId();
-        }
+        $ct = apply_filters( 'twikey_template_selection',$tc->getTemplateId(), $order );
+        TwikeyLoader::log("ct: ".$ct, WC_Log_Levels::ERROR);
 
         $my_order = array(
             "ct"                    => $ct,
@@ -259,15 +253,15 @@ class TwikeyGateway extends WC_Payment_Gateway
             "_txr"                  => $ref,
             "_txd"                  => $description,
             "amount"                => $amount,
-            'email'                 => $order->get_billing_email(),
-            'firstname'             => $order->get_billing_first_name(),
-            'lastname'              => $order->get_billing_last_name(),
-            'company'               => $order->get_billing_company(),
-            'address'               => $order->get_billing_address_1(),
-            'city'                  => $order->get_billing_city(),
-            'zip'                   => $order->get_billing_postcode(),
-            'country'               => $order->get_billing_country(),
-            'mobile'                => $order->get_billing_phone(),
+            'email'                 => $order->billing_email,
+            'firstname'             => $order->billing_first_name,
+            'lastname'              => $order->billing_last_name,
+            'company'               => $order->billing_company,
+            'address'               => $order->billing_address_1,
+            'city'                  => $order->billing_city,
+            'zip'                   => $order->billing_postcode,
+            'country'               => $order->billing_country,
+            'mobile'                => $order->billing_phone,
             'l'                     => $lang
         );
 
@@ -279,8 +273,7 @@ class TwikeyGateway extends WC_Payment_Gateway
                 $url = $tr->url;
                 if(property_exists($tr,'mndtId')){
                     $mndtId = $tr->mndtId;
-                    $order->update_meta_data(self::TWIKEY_MNDT_ID, $mndtId);
-                    $order->save();
+                    add_post_meta( $order->id, self::TWIKEY_MNDT_ID, $mndtId, true );
                 }
                 return array(   'result'    => 'success','redirect'  => $url);
             }
@@ -304,12 +297,11 @@ class TwikeyGateway extends WC_Payment_Gateway
 
                     $order->update_status( 'on-hold', 'Awaiting payment confirmation from bank' );
 
-                    $order->update_meta_data(self::TWIKEY_MNDT_ID, $mndtId);
-                    $order->set_transaction_id($txentry->id);
-                    $order->save();
+                    add_post_meta( $order->id, self::TWIKEY_MNDT_ID, $mndtId, true );
+                    $order->add_payment_token($txentry->id);
 
                     // Reduce stock levels
-                    wc_reduce_stock_levels($order_id);
+                    $order->reduce_order_stock();
 
                     // Remove cart
                     $woocommerce->cart->empty_cart();
@@ -341,8 +333,8 @@ class TwikeyGateway extends WC_Payment_Gateway
 
     public function scheduled_subscription_payment($amount_to_charge,WC_Order $new_order ) {
 
-        $mndtId = $new_order->get_meta(self::TWIKEY_MNDT_ID);
-        $msg  = sprintf( '%1$s - Order %2$s', wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ), $new_order->get_id() );
+        $mndtId = get_post_meta( $new_order->id, self::TWIKEY_MNDT_ID, true );
+        $msg  = sprintf( '%1$s - Order %2$s', wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ), $new_order->id );
         TwikeyLoader::log("Schedule new tx: ".$msg.' for '.$mndtId, WC_Log_Levels::INFO);
 
         $tc = $this->getTwikey();
@@ -350,7 +342,7 @@ class TwikeyGateway extends WC_Payment_Gateway
         $my_order = array(
             "mndtId"                 => $mndtId,
             "message"                => $msg,
-            "ref"                    => $new_order->get_id(),
+            "ref"                    => $new_order->id,
             "amount"                 => round($amount_to_charge,2),
             "place"                  => 'Renewal'
         );
@@ -361,11 +353,10 @@ class TwikeyGateway extends WC_Payment_Gateway
         if(property_exists($tx,'Entries')){
             $txentry = $tx->Entries[0];
 
-            $new_order->set_transaction_id($txentry->id);
-            $new_order->save();
+            $new_order->add_payment_token($txentry->id);
 
             // Reduce stock levels
-            wc_reduce_stock_levels($new_order);
+            $new_order->reduce_order_stock();
             WC_Subscriptions_Manager::process_subscription_payments_on_order( $new_order );
         }
         else {
@@ -378,7 +369,7 @@ class TwikeyGateway extends WC_Payment_Gateway
     public function scheduled_subscription_activate($order_id){
         $order = new WC_Order($order_id);
         TwikeyLoader::log("Activating order ".$order_id, WC_Log_Levels::INFO);
-        $mndtId = $order->get_meta(self::TWIKEY_MNDT_ID);
+        $mndtId = get_post_meta( $order_id, self::TWIKEY_MNDT_ID, true );
 
         TwikeyLoader::log("Activating mndtId=".$mndtId, WC_Log_Levels::INFO);
         $tc = $this->getTwikey();
@@ -406,7 +397,7 @@ class TwikeyGateway extends WC_Payment_Gateway
 
     public function scheduled_subscription_status_updated($subscription, $new_status){
 
-        $mndtId = $subscription->get_meta(self::TWIKEY_MNDT_ID);
+        $mndtId = get_post_meta( $subscription->id, self::TWIKEY_MNDT_ID, true );
 
         if(!$mndtId)
             return;
@@ -440,10 +431,10 @@ class TwikeyGateway extends WC_Payment_Gateway
         $tc->updateMandate($payload);
 
         TwikeyLoader::log("Sending status $new_status for $mndtId", WC_Log_Levels::INFO);
-    }
+}
 
     public function cancel_subscription( $cancel_subscription ){
-        $mndtId = $cancel_subscription->get_meta(self::TWIKEY_MNDT_ID);
+        $mndtId = get_post_meta( $cancel_subscription->id, self::TWIKEY_MNDT_ID, true );
         TwikeyLoader::log("Cancelling ".$mndtId, WC_Log_Levels::INFO);
 
         $tc = $this->getTwikey();

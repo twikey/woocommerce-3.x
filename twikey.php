@@ -5,9 +5,9 @@
   Description: Twikey Payment Plugin
   Author: Twikey
   Author URI:http://www.twikey.com
-  Version: 2.1
+  Version: 1.0
 
-  Copyright: 2018 Twikey(email : support@twikey.com)
+  Copyright: 2017 Twikey(email : support@twikey.com)
   License: GNU General Public License v3.0
   License URI: http://www.gnu.org/licenses/gpl-3.0.html
 */
@@ -34,8 +34,8 @@ if (!function_exists('curl_version')) {
     add_action('admin_notices', __('error_curl_not_installed', 'twikey'));
 }
 
-define('TWIKEY_DEBUG',false);
-define('TWIKEY_HTTP_DEBUG',false);
+define('TWIKEY_DEBUG',true);
+define('TWIKEY_HTTP_DEBUG',true);
 
 add_action('plugins_loaded', 'init_twikey');
 function init_twikey(){
@@ -49,6 +49,19 @@ function init_twikey(){
 
 register_activation_hook(__FILE__, 'register');
 register_deactivation_hook( __FILE__, 'deregister' );
+
+// backport wc3
+abstract class WC_Log_Levels {
+  const EMERGENCY = 'emergency';
+  const ALERT     = 'alert';
+  const CRITICAL  = 'critical';
+  const ERROR     = 'error';
+  const WARNING   = 'warning';
+  const NOTICE    = 'notice';
+  const INFO      = 'info';
+  const DEBUG     = 'debug';
+}
+
 
 function register(){
     TwikeyLoader::log("Scheduling tasks",WC_Log_Levels::NOTICE);
