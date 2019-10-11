@@ -30,18 +30,16 @@ class TwikeyLoader {
     }
 
     public static function filter_gateways( $gateways ) {
-        global $theorder;
         if ( is_cart() ||  is_checkout()  ) {
-
-            $selected_gateway = apply_filters( 'twikey_gateway_selection', WC()->cart->get_cart() );
+            $selected_gateway = apply_filters( 'twikey_gateway_selection',$gateways,WC()->cart->get_cart());
             // Reverse logic, if you chose one, you need to unset the other one
-	        if ( empty( $selected_gateway ) ){
+            if ( empty( $selected_gateway ) ){
                 # unset the paylink gateway so the DD is chosen by default
                 if (isset($gateways['twikey-paylink'])) {
                     unset($gateways['twikey-paylink']);
                 }
-	        }
-	        else {
+            }
+            else {
                 if ($selected_gateway == 'twikey') {
                     if (isset($gateways['twikey-paylink'])) {
                         unset($gateways['twikey-paylink']);
@@ -51,7 +49,7 @@ class TwikeyLoader {
                         unset($gateways['twikey']);
                     }
                 }
-	        }
+            }
         }
         return $gateways;
     }
@@ -74,7 +72,8 @@ class TwikeyLoader {
         self::$log->log($level, $message ,array ( 'source' => 'Twikey-Http' ));
     }
 
-//    public static function selectGatewayBasedOnCart($cart){
+//    public static function selectGatewayBasedOnCart(){
+//        $cart = WC()->cart->get_cart();
 //        foreach ($cart as $cart_item_key => $cart_item) {
 //            $productId = $cart_item['product_id'];
 //            $term_list = wp_get_post_terms($productId, 'product_cat');
@@ -93,4 +92,3 @@ class TwikeyLoader {
 //    }
 
 }
-
