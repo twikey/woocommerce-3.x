@@ -2,7 +2,7 @@
 
 class Twikey {
 
-    const VERSION = '2.1.0';
+    const VERSION = '2.2.0';
 
     public $templateId;
     public $websiteKey;
@@ -92,19 +92,14 @@ class Twikey {
      */
     public function createNew($data) {
         $this->auth = $this->authenticate();
-
         $payload = http_build_query($data);
-
         $this->debugRequest($payload);
-
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, sprintf("%s/creditor/prepare", $this->endpoint));
         curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array("Authorization: $this->auth","Accept-Language: $this->lang"));
         curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $this->setCurlDefaults($ch);
-
         $server_output = curl_exec($ch);
         $this->checkResponse($ch, $server_output, "Creating a new mandate!");
         curl_close($ch);
@@ -118,15 +113,11 @@ class Twikey {
      */
     public function updateMandate($data) {
         $this->auth = $this->authenticate();
-
         $payload = http_build_query($data);
-
         $this->debugRequest($payload);
-
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, sprintf("%s/creditor/mandate/update", $this->endpoint));
         curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array("Authorization: $this->auth","Accept-Language: $this->lang"));
         curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $this->setCurlDefaults($ch);
@@ -143,11 +134,9 @@ class Twikey {
      */
     public function cancelMandate($mndtId) {
         $this->auth = $this->authenticate();
-
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, sprintf("%s/creditor/mandate?mndtId=".$mndtId, $this->endpoint));
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array("Authorization: $this->auth","Accept-Language: $this->lang"));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $this->setCurlDefaults($ch);
         $server_output = curl_exec($ch);
@@ -172,7 +161,6 @@ class Twikey {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, sprintf("%s/creditor/transaction", $this->endpoint));
         curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array("Authorization: $this->auth","Accept-Language: $this->lang"));
         curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $this->setCurlDefaults($ch);
@@ -194,7 +182,6 @@ class Twikey {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, sprintf("%s/creditor/payment/link", $this->endpoint));
         curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array("Authorization: $this->auth","Accept-Language: $this->lang"));
         curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $this->setCurlDefaults($ch);
@@ -212,22 +199,17 @@ class Twikey {
      */
     public function verifyLink($linkid,$ref) {
         $this->auth = $this->authenticate();
-
         if(empty($ref)){
             $payload = http_build_query(array("id" => $linkid));
         }
         else {
             $payload = http_build_query(array("ref" => $ref));
         }
-
         $this->debugRequest($payload);
-
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, sprintf("%s/creditor/payment/link?%s", $this->endpoint,$payload));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array("Authorization: $this->auth","Accept-Language: $this->lang"));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $this->setCurlDefaults($ch);
-
         $server_output = curl_exec($ch);
         $this->checkResponse($ch, $server_output, "Verifying a paymentlink ".$payload);
         curl_close($ch);
@@ -242,23 +224,18 @@ class Twikey {
      */
     public function getPayments($id, $detail) {
         $this->auth = $this->authenticate();
-
         $payload = http_build_query(array(
             "id" => $id,
             "detail" => $detail
         ));
-
         $this->debugRequest($payload);
-
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, sprintf("%s/creditor/payment?%s", $this->endpoint, $payload));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array("Authorization: $this->auth"/*, "X-RESET: true"*/,"Accept-Language: $this->lang"));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $this->setCurlDefaults($ch);
         $server_output = curl_exec($ch);
         $this->checkResponse($ch, $server_output, "Retrieving payments!");
         curl_close($ch);
-
         return json_decode($server_output);
     }
 
@@ -270,26 +247,20 @@ class Twikey {
      */
     public function getPaymentStatus($txid,$ref) {
         $this->auth = $this->authenticate();
-
         if(empty($ref)){
             $payload = http_build_query(array("id" => $txid));
         }
         else {
             $payload = http_build_query(array("ref" => $ref));
         }
-
         $this->debugRequest($payload);
-
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, sprintf("%s/creditor/transaction/detail?%s", $this->endpoint, $payload));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array("Authorization: $this->auth"/*, "X-RESET: true"*/,"Accept-Language: $this->lang"));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $this->setCurlDefaults($ch);
-
         $server_output = curl_exec($ch);
         $this->checkResponse($ch, $server_output, "Retrieving payments!");
         curl_close($ch);
-
         return json_decode($server_output);
     }
 
@@ -298,22 +269,24 @@ class Twikey {
      */
     public function getTransactionFeed() {
         $this->auth = $this->authenticate();
-
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, sprintf("%s/creditor/transaction", $this->endpoint));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array("Authorization: $this->auth"/*, "X-RESET: true"*/,"Accept-Language: $this->lang"));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $this->setCurlDefaults($ch);
-
         $server_output = curl_exec($ch);
         $this->checkResponse($ch, $server_output, "Retrieving transaction feed!");
         curl_close($ch);
-
         return json_decode($server_output);
     }
 
     private function setCurlDefaults($ch){
         curl_setopt($ch, CURLOPT_USERAGENT, "twikey-php/v".Twikey::VERSION);
+        if(isset($this->auth)){
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+                "Authorization: $this->auth",
+                "Accept-Language: $this->lang"
+            ));
+        }
         if(TWIKEY_HTTP_DEBUG){
             curl_setopt($ch, CURLOPT_VERBOSE, true);
         }
@@ -373,10 +346,6 @@ class Twikey {
         return $server_output;
     }
 
-    /**
-     * Allows
-     * @param $msg
-     */
     public function debugRequest($msg){
         if (TWIKEY_HTTP_DEBUG) {
             log('Request : '.$msg, 0);

@@ -53,6 +53,11 @@ class TwikeyGateway extends WC_Payment_Gateway
     }
 
     public function verify_order_action(WC_Order $order ) {
+        if ( $this->enabled != 'yes' ) {
+            return false;
+        }
+
+        TwikeyLoader::log("Verifying with Twikey:  ".$order->get_id(),WC_Log_Levels::DEBUG);
         try{
             $tc  = $this->getTwikey();
             $status = $tc->getPaymentStatus(null,$order->get_id());
@@ -127,7 +132,7 @@ class TwikeyGateway extends WC_Payment_Gateway
         if(isset($_GET['type']) && !isset($_GET['id'])){
             $type = $_GET['type'];
             TwikeyLoader::log("Got callback from Twikey type=". $type, WC_Log_Levels::DEBUG);
-            if($type === 'payment'){
+            if($type === 'payment' || $type === 'contract'){
                 $this->verify_payments();
             }
             status_header(200, $type);
@@ -246,7 +251,7 @@ class TwikeyGateway extends WC_Payment_Gateway
         $ref = $order->get_order_number();
         $amount = round($order->get_total());
 
-        $ct = apply_filters( 'twikey_template_selection', $order );
+        $ct = apply_filters( 'twikey_template_selection',$tc->getTemplateId(), $order );
         if( empty($ct) ){
             $ct = $tc->getTemplateId();
         }

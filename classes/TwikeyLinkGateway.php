@@ -26,6 +26,11 @@ class TwikeyLinkGateway extends WC_Payment_Gateway
     }
 
     public function verify_order_action(WC_Order $order ) {
+        if ( $this->enabled != 'yes' ) {
+            return false;
+        }
+
+        TwikeyLoader::log("Verifying link with Twikey:  ".$order->get_id(),WC_Log_Levels::DEBUG);
         try{
             $tc  = $this->getTwikey();
             $status = $tc->verifyLink(null,$order->get_id());
@@ -34,12 +39,16 @@ class TwikeyLinkGateway extends WC_Payment_Gateway
             $this->updateOrder($order, $entry);
         }
         catch (TwikeyException $e){
-            WC_Admin_Meta_Boxes::add_error( "Error verifying with Twikey:  ".$e->getMessage() );
-            TwikeyLoader::log("Error verifying with Twikey:  ".$e->getMessage(),WC_Log_Levels::ERROR);
+            WC_Admin_Meta_Boxes::add_error( "Error verifying link with Twikey:  ".$e->getMessage() );
+            TwikeyLoader::log("Error verifying link with Twikey:  ".$e->getMessage(),WC_Log_Levels::ERROR);
         }
     }
 
     function updateOrder(WC_Order $order, $entry){
+        if ( $this->enabled != 'yes' ) {
+            return false;
+        }
+
         $orderState = $entry->state;
         if($orderState == 'paid'){
             TwikeyLoader::log("Set payment date of order #".$entry->bkdate,WC_Log_Levels::INFO);
