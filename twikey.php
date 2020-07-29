@@ -5,7 +5,7 @@
   Description: Twikey Payment Plugin
   Author: Twikey
   Author URI:http://www.twikey.com
-  Version: 2.1
+  Version: 2.3
 
   Copyright: 2018 Twikey(email : support@twikey.com)
   License: GNU General Public License v3.0

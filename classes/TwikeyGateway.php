@@ -276,6 +276,10 @@ class TwikeyGateway extends WC_Payment_Gateway
             'l'                     => $lang
         );
 
+        if($order->get_user_id() != 0){
+            $my_order['customerNumber'] = $order->get_user_id();
+        }
+
         try {
             $msg = null;
             $tr = $tc->createNew($my_order);
@@ -287,7 +291,7 @@ class TwikeyGateway extends WC_Payment_Gateway
                     $order->update_meta_data(self::TWIKEY_MNDT_ID, $mndtId);
                     $order->save();
                 }
-                return array(   'result'    => 'success','redirect'  => $url);
+                return array('result' => 'success','redirect'  => $url);
             }
             else if(property_exists($tr,'mndtId')){
                 $ip = $_SERVER["REMOTE_ADDR"];

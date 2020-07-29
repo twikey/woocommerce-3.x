@@ -1,5 +1,5 @@
 <a href="https://www.twikey.com"><img src="https://www.twikey.com/img/logo.svg" width="110"></a>
-  
+
 Want to allow your customers to pay in the most convenient way, then Twikey is right what you need.
 
 <blockquote>
@@ -21,8 +21,9 @@ favorite PSP to allow other customers to pay as well.
 * Multiple languages available for end-customers: English, Dutch, French, German, Italian, Spanish, and Portuguese
 * Reconciliation output covering all payments for accounting packages
 * Redirect URLs
+* NEW: From 2.3 customers are also added to your Twikey dashboard allowing 1 view on customers' direct debit and paymentlinks
 
-  
+
 ### For the validations of Sepa Direct Debit mandates
 
 Core: All 3500 European banks
@@ -33,7 +34,7 @@ B2B: ABN-Amro, Bank J. Van Breda, Belfius, BNP Paribas Fortis, Crelan, ING (Belg
 Affiliated banks:
 
 * ABN-Amro (international)
-* Belfius 
+* Belfius
 * BNP Paribas Fortis (Belgium & Netherlands)
 * BNP Paribas (international)
 * KBC
@@ -60,7 +61,7 @@ Backup payments:
 * Tikkie (the Netherlands)
 * Credit transfers
 
-Please go to the Twikey [signup page](https://www.twikey.com) to start with Twikey. 
+Please go to the Twikey [signup page](https://www.twikey.com) to start with Twikey.
 Contact info@twikey.com if you have questions or comments about this plugin.
 
 > We offer you the "payment building blocks" for constructing your own cheap payment gateway.

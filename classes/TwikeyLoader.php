@@ -11,7 +11,7 @@ class TwikeyLoader {
 
         add_filter('woocommerce_payment_gateways'  , array(__CLASS__, 'addTwikeyGateways'));
         add_filter('woocommerce_order_actions', array( __CLASS__, 'add_verify_order_action' ));
-        add_filter('woocommerce_available_payment_gateways', array( __CLASS__, 'filter_gateways' ), 1);
+        //add_filter('woocommerce_available_payment_gateways', array( __CLASS__, 'filter_gateways' ), 1);
         //add_filter('twikey_gateway_selection', array( __CLASS__, 'selectGatewayBasedOnCart') );
         //add_filter('twikey_template_selection', array( __CLASS__, 'selectCtBasedOnOrder') );
     }

@@ -2,7 +2,7 @@
 
 class Twikey {
 
-    const VERSION = '2.2.0';
+    const VERSION = '2.3.0';
 
     public $templateId;
     public $websiteKey;

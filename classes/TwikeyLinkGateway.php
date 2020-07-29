@@ -211,12 +211,26 @@ class TwikeyLinkGateway extends WC_Payment_Gateway
             ),get_home_url() );
 
         $linkData = [
-            "name" => $order->get_billing_first_name() . " " . $order->get_billing_last_name(),
-            "amount" => $amount,
-            "message" => $description,
-            "ref" => $ref,
-            "redirectUrl" => $exiturl
+            'email'                 => $order->get_billing_email(),
+            'firstname'             => $order->get_billing_first_name(),
+            'lastname'              => $order->get_billing_last_name(),
+            'company'               => $order->get_billing_company(),
+            'address'               => $order->get_billing_address_1(),
+            'city'                  => $order->get_billing_city(),
+            'zip'                   => $order->get_billing_postcode(),
+            'country'               => $order->get_billing_country(),
+            'mobile'                => $order->get_billing_phone(),
+            'l'                     => $lang,
+            "amount"                => $amount,
+            "message"               => $description,
+            "ref"                   => $ref,
+            "redirectUrl"           => $exiturl
         ];
+
+        if($order->get_user_id() != 0){
+            $linkData['customerNumber'] = $order->get_user_id();
+        }
+
         try {
             $paymentlink = $tc->newLink($linkData);
             if($paymentlink->url){
