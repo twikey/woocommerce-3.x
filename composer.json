@@ -1,0 +1,20 @@
+{
+    "name": "twikey/woocommerce-3.x",
+    "description": "Twikey Woocommerce Plugin",
+    "type": "wordpress-plugin",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Twikey N.V.",
+            "email": "support@twikey.com"
+        }
+    ],
+    "require": {
+        "composer/installers": "^1.0 || ^2.0"
+    },
+  "config": {
+    "allow-plugins": {
+      "composer/installers": true
+    }
+  }
+}

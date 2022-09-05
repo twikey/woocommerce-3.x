@@ -39,10 +39,10 @@ define('TWIKEY_HTTP_DEBUG',false);
 
 add_action('plugins_loaded', 'init_twikey');
 function init_twikey(){
-    if (is_plugin_active('woocommerce/woocommerce.php') || is_plugin_active_for_network('woocommerce/woocommerce.php')) {
+    if (function_exists( 'is_woocommerce_active' )) {
         TwikeyLoader::register();
     } else {
-        // Woocommerce is niet actief. foutmelding weergeven
+        // Woocommerce is not active. raise error
         add_action('admin_notices', "WooCommerce is not yet active");
     }
 }
