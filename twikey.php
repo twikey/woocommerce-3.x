@@ -39,11 +39,13 @@ define('TWIKEY_HTTP_DEBUG',false);
 
 add_action('plugins_loaded', 'init_twikey');
 function init_twikey(){
-    if (function_exists( 'is_woocommerce_active' )) {
+    if (class_exists( 'woocommerce' )) {
         TwikeyLoader::register();
     } else {
         // Woocommerce is not active. raise error
-        add_action('admin_notices', "WooCommerce is not yet active");
+        add_action('admin_notices', function() {
+            echo '<div class="error"><p>' . __('To use the Twikey plugin it is required that woocommerce is active', 'twikey') . '</p></div>';
+        });
     }
 }
 
