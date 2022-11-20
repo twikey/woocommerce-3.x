@@ -21,36 +21,36 @@ require_once( ABSPATH . '/wp-admin/includes/plugin.php' );
 //textdomain inladen
 load_plugin_textdomain( 'twikey', false, plugin_basename( dirname( __FILE__ ) ) . "/i18n/languages" );
 
-function error_woocommerce_not_active() {
+function twikey_error_woocommerce_not_active() {
     echo '<div class="error"><p>' . __('To use the Twikey plugin it is required that woocommerce is active', 'twikey') . '</p></div>';
 }
 
-function error_curl_not_installed() {
+function twikey_error_curl_not_installed() {
     echo '<div class="error"><p>' . __('error_curl_not_installed', 'twikey') . '</p></div>';
 }
 
 // Curl is niet geinstalleerd. foutmelding weergeven
 if (!function_exists('curl_version')) {
-    add_action('admin_notices', __('error_curl_not_installed', 'twikey'));
+    add_action('admin_notices', 'twikey_error_curl_not_installed');
 }
 
 define('TWIKEY_DEBUG',false);
 define('TWIKEY_HTTP_DEBUG',false);
 
-add_action('plugins_loaded', 'init_twikey');
-function init_twikey(){
-    if (function_exists( 'is_woocommerce_active' )) {
+add_action('plugins_loaded', 'twikey_init');
+function twikey_init(){
+    if (class_exists( 'woocommerce' )) {
         TwikeyLoader::register();
     } else {
         // Woocommerce is not active. raise error
-        add_action('admin_notices', "WooCommerce is not yet active");
+        add_action('admin_notices', 'twikey_error_woocommerce_not_active');
     }
 }
 
-register_activation_hook(__FILE__, 'register');
-register_deactivation_hook( __FILE__, 'deregister' );
+register_activation_hook(__FILE__, 'twikey_register');
+register_deactivation_hook( __FILE__, 'twikey_deregister' );
 
-function register(){
+function twikey_register(){
     TwikeyLoader::log("Scheduling tasks",WC_Log_Levels::NOTICE);
     if ( ! wp_next_scheduled( 'twikey_scheduled_verifyPayments' ) ){
         wp_schedule_event(time(),'twicedaily','twikey_scheduled_verifyPayments');
@@ -60,7 +60,7 @@ function register(){
     register_deactivation_hook( __FILE__, array( __CLASS__, 'unschedule_twikey' ) );
 }
 
-function deregister(){
+function twikey_deregister(){
     wp_clear_scheduled_hook('twikey_scheduled_verifyPayments');
     TwikeyLoader::log("Unregistering Twikey scheduled tasks",WC_Log_Levels::NOTICE);
 }
