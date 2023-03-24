@@ -62,6 +62,10 @@ class TwikeyGateway extends WC_Payment_Gateway
             $tc  = $this->getTwikey();
             $status = $tc->getPaymentStatus(null,$order->get_id());
 
+            if (count($status->Entries) == 0) {
+                throw new TwikeyException("No payment found for order #".$order->get_id());
+            }
+
             $entry = $status->Entries[0];
             $this->updateOrder($order, $entry);
         }
