@@ -32,7 +32,7 @@
     <p>
         Twikey offers a simple and safe multichannel solution to negotiate and collect recurring (or even occasional) payments.
         Twikey has integrations with most accounting and CRM packages. It is the first and only provider to operate on a European level
-        for Direct Debit and can work directly with all major Belgian and Dutch Banks. However you can use the payment options of your
+        for Direct Debit and can work directly with all major Belgian and Dutch Banks. Nevertheless, you can use the payment options of your
         favorite PSP to allow other customers to pay as well.
     </p>
 
@@ -82,16 +82,21 @@
 
     <ol>
         <li>Via <a href="https://www.twikey.com/r/admin#/c/settings/ei">Settings &gt; API</a></li>
-        <li>Choose “Own integration"</li>
         <li>API token = API key for plugin</li>
-        <li>For timely order updates use <b>{your url}/?wc-api=twikey_webhook</b></li>
+        <li>For timely order updates use <b>{your wordpress url}/?wc-api=twikey_webhook</b></li>
     </ol>
 
     <p><img src="images/APIKeyModified.png" alt="Image of APIKey" /></p>
 
     <h2 id="step-6-website-key-twikey">Step 6: Website key [Twikey]</h2>
 
-    <p>The website key allows the plugin to verify that incoming requests are coming from us.</p>
+    <p>
+        The website key allows the plugin to verify that incoming requests are coming from us.
+        This is only available in the old GUI. Switch to it by selecting your name in the op right corner and selecting "Old Interface".
+    </p>
+
+
+
 
     <ol>
         <li>Via <a href="https://www.twikey.com/r/admin#/c/settings/ip">Settings &gt; Website</a></li>
@@ -105,7 +110,7 @@
     <ol>
         <li>Via <a href="https://www.twikey.com/r/admin#/c/contracttemplate">Settings &gt; templates</a></li>
         <li>Choose the template number you want to connect to your WooCommerce store.</li>
-        <li>For proper checkout, use your Twikey template: <b>{your url}/wc-api=twikey_exit&mndt={0}&status={1}&s={3}&t={4}</b> as exit url.</li>
+        <li>For proper checkout, use your Twikey template: <b>{your url}/wc-api=twikey_exit&mndt={0}&status={1}&s={3}&t={4}</b> as exit url. on the Twikey profile under Interaction</li>
     </ol>
 
     <p><img src="images/TemplateKeyModified.png" alt="Image of TemplateKey" /></p>
