@@ -122,7 +122,12 @@ class TwikeyLinkGateway extends WC_Payment_Gateway
             TwikeyLoader::log("Got callback from Twikey paymentlink=". $ref, WC_Log_Levels::DEBUG);
             if($type === 'payment' && $ref){
                 $order    = wc_get_order( $ref );
-                $this->verify_order_action ($order);
+                if ($order) {
+                    $this->verify_order_action ($order);
+                }
+                else {
+                    TwikeyLoader::log("No order found for". $ref, WC_Log_Levels::INFO);
+                }
             }
             status_header(200, $type);
         }

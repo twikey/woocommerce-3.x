@@ -228,7 +228,7 @@ class TwikeyGateway extends WC_Payment_Gateway
             }
         }
         catch (TwikeyException $e){
-            TwikeyLoader::log("Error while verifying payments",WC_Log_Levels::ERROR);
+            TwikeyLoader::log("Error while verifying payments: ".$e->getMessage(),WC_Log_Levels::WARNING);
         }
     }
 
