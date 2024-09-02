@@ -2,19 +2,14 @@
 
 class Twikey {
 
-    const VERSION = '2.3.0';
+    const VERSION = '2.4.0';
+    const TWIKEY_API_TOKEN = "twikey-api-token";
 
     public $templateId;
     public $websiteKey;
     public $endpoint = "https://api.twikey.com";
     protected $apiToken;
     protected $lang = 'en';
-
-    protected $auth;
-
-    public function setEndpoint($endpoint){
-        $this->endpoint = trim($endpoint);
-    }
 
     public function setTestmode($testMode){
         if($testMode){
@@ -53,36 +48,40 @@ class Twikey {
      * @throws TwikeyException
      */
     function authenticate() {
+        $token = get_transient(self::TWIKEY_API_TOKEN);
+        if(empty( $token )){
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, sprintf("%s/creditor", $this->endpoint));
+            curl_setopt($ch, CURLOPT_POST, 1);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, sprintf("apiToken=%s", $this->apiToken));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_USERAGENT, "twikey-wc/v".Twikey::VERSION);
 
-        if ($this->auth != "")
-            return $this->auth;
+            $server_output = curl_exec($ch);
+            $this->checkResponse($ch, $server_output, "Authentication");
+            curl_close($ch);
 
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, sprintf("%s/creditor", $this->endpoint));
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, sprintf("apiToken=%s", $this->apiToken));
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        $this->setCurlDefaults($ch);
-
-        $server_output = curl_exec($ch);
-        $this->checkResponse($ch, $server_output, "Authentication");
-        curl_close($ch);
-
-        $result = json_decode($server_output);
-        if(isset($result->{'Authorization'})){
-            $this->auth = $result->{'Authorization'};
-        }
-        else if(isset($result->{'message'})){
-            if(TWIKEY_HTTP_DEBUG)
-                $this->log("Error ".$server_output);
-            throw new TwikeyException("Twikey: ".$result->{'message'});
+            $result = json_decode($server_output);
+            if(isset($result->{'Authorization'})){
+                $token = $result->{'Authorization'};
+                $this->log("New Twikey token : $token");
+                if(!set_transient( self::TWIKEY_API_TOKEN, $token, 60*60*23 /*23h in seconds*/ ))
+                    throw new TwikeyException("Twikey: Could not set token : ".$token);
+            }
+            else if(isset($result->{'message'})){
+                $this->log("Error getting new token $server_output");
+                throw new TwikeyException("Twikey: ".$result->{'message'});
+            }
+            else {
+                $this->log("Twikey unreachable  @ ".$this->endpoint."(Response=".$server_output.")");
+                throw new TwikeyException("Twikey unreachable");
+            }
         }
         else {
-            if(TWIKEY_HTTP_DEBUG)
-                $this->log("Twikey unreachable  @ ".$this->endpoint."(Response=".$server_output.")");
-            throw new TwikeyException("Twikey unreachable");
+            if(TWIKEY_DEBUG)
+                $this->log("Reusing token=$token");
         }
-        return $this->auth;
+        return $token;
     }
 
     /**
@@ -91,7 +90,6 @@ class Twikey {
      * @throws TwikeyException
      */
     public function createNew($data) {
-        $this->auth = $this->authenticate();
         $payload = http_build_query($data);
         $this->debugRequest($payload);
         $ch = curl_init();
@@ -112,7 +110,6 @@ class Twikey {
      * @throws TwikeyException
      */
     public function updateMandate($data) {
-        $this->auth = $this->authenticate();
         $payload = http_build_query($data);
         $this->debugRequest($payload);
         $ch = curl_init();
@@ -133,7 +130,6 @@ class Twikey {
      * @throws TwikeyException
      */
     public function cancelMandate($mndtId) {
-        $this->auth = $this->authenticate();
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, sprintf("%s/creditor/mandate?mndtId=".$mndtId, $this->endpoint));
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
@@ -152,8 +148,6 @@ class Twikey {
      */
     public function newTransaction($data)
     {
-        $this->auth = $this->authenticate();
-
         $payload = http_build_query($data);
 
         $this->debugRequest($payload);
@@ -176,7 +170,6 @@ class Twikey {
      * @throws TwikeyException
      */
     public function newLink($data) {
-        $this->auth = $this->authenticate();
         $payload = http_build_query($data);
         $this->debugRequest($payload);
         $ch = curl_init();
@@ -198,7 +191,6 @@ class Twikey {
      * @throws TwikeyException
      */
     public function verifyLink($linkid,$ref) {
-        $this->auth = $this->authenticate();
         if(empty($ref)){
             $payload = http_build_query(array("id" => $linkid));
         }
@@ -223,7 +215,6 @@ class Twikey {
      * @throws TwikeyException
      */
     public function getPayments($id, $detail) {
-        $this->auth = $this->authenticate();
         $payload = http_build_query(array(
             "id" => $id,
             "detail" => $detail
@@ -246,7 +237,6 @@ class Twikey {
      * @throws TwikeyException
      */
     public function getPaymentStatus($txid,$ref) {
-        $this->auth = $this->authenticate();
         if(empty($ref)){
             $payload = http_build_query(array("id" => $txid));
         }
@@ -268,7 +258,6 @@ class Twikey {
      * @throws TwikeyException
      */
     public function getTransactionFeed() {
-        $this->auth = $this->authenticate();
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, sprintf("%s/creditor/transaction", $this->endpoint));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -280,13 +269,12 @@ class Twikey {
     }
 
     private function setCurlDefaults($ch){
-        curl_setopt($ch, CURLOPT_USERAGENT, "twikey-php/v".Twikey::VERSION);
-        if(isset($this->auth)){
-            curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-                "Authorization: $this->auth",
-                "Accept-Language: $this->lang"
-            ));
-        }
+        $token = $this->authenticate();
+        curl_setopt($ch, CURLOPT_USERAGENT, "twikey-wc/v".Twikey::VERSION);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+            "Authorization: $token",
+            "Accept-Language: $this->lang"
+        ));
         if(TWIKEY_HTTP_DEBUG){
             curl_setopt($ch, CURLOPT_VERBOSE, true);
         }
@@ -348,7 +336,7 @@ class Twikey {
 
     public function debugRequest($msg){
         if (TWIKEY_HTTP_DEBUG) {
-            log('Request : '.$msg, 0);
+            $this->log('Request : '.$msg);
         }
     }
 

@@ -1,19 +1,20 @@
 <?php
-/*
-  Plugin Name: Twikey
-  Plugin URI: https://www.twikey.com
-  Description: Twikey Payment Plugin
-  Author: Twikey
-  Author URI:http://www.twikey.com
-  Version: 2.3
-
-  Copyright: 2018 Twikey(email : support@twikey.com)
-  License: GNU General Public License v3.0
-  License URI: http://www.gnu.org/licenses/gpl-3.0.html
+/**
+ * Plugin Name: Twikey
+ * Plugin URI: https://www.twikey.com
+ * Description: Twikey Payment Plugin
+ * Author: Twikey
+ * Author URI:http://www.twikey.com
+ * Version: 2.3
+ * Requires PHP: 7.2
+ * WC requires at least: 3.9
+ * Requires Plugins: woocommerce
+ * Copyright: 2018 Twikey(email : support@twikey.com)
+ * License: GNU General Public License v3.0
+ * License URI: http://www.gnu.org/licenses/gpl-3.0.html
 */
-
 //Autoloader laden en registreren
-require_once dirname(__FILE__) . '/classes/TwikeyLoader.php';
+require_once __DIR__ . '/classes/TwikeyLoader.php';
 
 //plugin functies inladen
 require_once( ABSPATH . '/wp-admin/includes/plugin.php' );
@@ -71,3 +72,4 @@ function twikey_scheduled_verifyPayments(){
     WC()->payment_gateways();
     do_action('verify_payments');
 }
+
