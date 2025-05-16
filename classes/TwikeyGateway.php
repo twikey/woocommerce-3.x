@@ -249,7 +249,7 @@ class TwikeyGateway extends WC_Payment_Gateway
 
         $description = "Order ".$order->get_order_number();
         $ref = $order->get_order_number();
-        $amount = round($order->get_total());
+        $amount = round($order->get_total(),2);
 
         $ct = apply_filters( 'twikey_template_selection',$tc->getTemplateId(), $order );
         if( empty($ct) ){

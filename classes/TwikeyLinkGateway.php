@@ -206,7 +206,7 @@ class TwikeyLinkGateway extends WC_Payment_Gateway
         $tc = $this->getTwikey($lang);
         $description = "Order ".$order->get_order_number();
         $ref = $order->get_order_number();
-        $amount = round($order->get_total());
+        $amount = round($order->get_total(),2);
 
         $sig = $this->calculateSig($order_id,$amount, $tc->getApiToken());
         $exiturl = add_query_arg(
