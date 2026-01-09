@@ -1,5 +1,7 @@
 <?php
 
+use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
+
 class TwikeyLoader {
 
     private static $log;
@@ -8,9 +10,14 @@ class TwikeyLoader {
         require_once dirname(__FILE__) . '/Twikey.php';
         require_once dirname(__FILE__) . '/TwikeyGateway.php';
         require_once dirname(__FILE__) . '/TwikeyLinkGateway.php';
+        require_once dirname(__FILE__) . '/TwikeyPaymentMethodType.php';
+        require_once dirname(__FILE__) . '/TwikeyLinkPaymentMethodType.php';
+
 
         add_filter('woocommerce_payment_gateways'  , array(__CLASS__, 'addTwikeyGateways'));
         add_filter('woocommerce_order_actions', array( __CLASS__, 'add_verify_order_action' ));
+        add_action('woocommerce_blocks_payment_method_type_registration', array( __CLASS__, 'addTwikeyPaymentMethods' ) );
+
         //add_filter('woocommerce_available_payment_gateways', array( __CLASS__, 'filter_gateways' ), 1);
         //add_filter('twikey_gateway_selection', array( __CLASS__, 'selectGatewayBasedOnCart') );
         //add_filter('twikey_template_selection', array( __CLASS__, 'selectCtBasedOnOrder') );
@@ -20,6 +27,12 @@ class TwikeyLoader {
         $methods[] = 'TwikeyGateway';
         $methods[] = 'TwikeyLinkGateway';
         return $methods;
+    }
+
+    public static function addTwikeyPaymentMethods( PaymentMethodRegistry $paymentMethodRegistry)
+    {
+        $paymentMethodRegistry->register( new TwikeyPaymentMethodType() );
+        $paymentMethodRegistry->register( new TwikeyLinkPaymentMethodType() );
     }
 
     public static function add_verify_order_action( $actions ) {
